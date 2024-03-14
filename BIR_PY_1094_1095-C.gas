@@ -1,0 +1,1650 @@
+Program.Sub.ScreenSU.Start
+Gui.SS_Form1..Create
+Gui.SS_Form1..Caption("1094/1095-C")
+Gui.SS_Form1..Size(2250,1740)
+Gui.SS_Form1..Position(0,0)
+Gui.SS_Form1..AlwaysOnTop(False)
+Gui.SS_Form1..FontName("Arial")
+Gui.SS_Form1..FontSize(8)
+Gui.SS_Form1..ForeColor(0)
+Gui.SS_Form1..Backcolor(-2147483633)
+Gui.SS_Form1..ControlBox(True)
+Gui.SS_Form1..MaxButton(False)
+Gui.SS_Form1..MinButton(False)
+Gui.SS_Form1..MousePointer(0)
+Gui.SS_Form1..Moveable(True)
+Gui.SS_Form1..Sizeable(False)
+Gui.SS_Form1..ShowInTaskBar(True)
+Gui.SS_Form1..TitleBar(True)
+Gui.SS_Form1..Event(unload,ss_form1_unload)
+Gui.SS_Form1.lbl_dtp1_year.Create(label)
+Gui.SS_Form1.lbl_dtp1_year.Caption("Filing Year")
+Gui.SS_Form1.lbl_dtp1_year.Visible(True)
+Gui.SS_Form1.lbl_dtp1_year.Size(1800,200)
+Gui.SS_Form1.lbl_dtp1_year.Zorder(1)
+Gui.SS_Form1.lbl_dtp1_year.Position(100,135)
+Gui.SS_Form1.lbl_dtp1_year.Enabled(True)
+Gui.SS_Form1.lbl_dtp1_year.Alignment(0)
+Gui.SS_Form1.lbl_dtp1_year.FontName("Arial")
+Gui.SS_Form1.lbl_dtp1_year.FontSize(8)
+Gui.SS_Form1.lbl_dtp1_year.Backcolor(-2147483633)
+Gui.SS_Form1.lbl_dtp1_year.BackStyle(0)
+Gui.SS_Form1.lbl_dtp1_year.SetInternationalID(242801)
+Gui.SS_Form1.lbl_dtp1_year.Tooltip("")
+Gui.SS_Form1.lbl_dtp1_year.ControlGroup(0)
+Gui.SS_Form1.dtp1_year.Create(datepicker)
+Gui.SS_Form1.dtp1_year.Visible(True)
+Gui.SS_Form1.dtp1_year.Size(1800,345)
+Gui.SS_Form1.dtp1_year.Zorder(0)
+Gui.SS_Form1.dtp1_year.Position(100,335)
+Gui.SS_Form1.dtp1_year.Enabled(True)
+Gui.SS_Form1.dtp1_year.Checkbox(False)
+Gui.SS_Form1.dtp1_year.TabStop(True)
+Gui.SS_Form1.dtp1_year.TabIndex(1)
+Gui.SS_Form1.dtp1_year.Tooltip("")
+Gui.SS_Form1.dtp1_year.ControlGroup(0)
+Gui.SS_Form1.dtp1_year.DefaultValue("")
+Gui.SS_Form1.cmd1Print.Create(button)
+Gui.SS_Form1.cmd1Print.Caption("Print")
+Gui.SS_Form1.cmd1Print.Visible(True)
+Gui.SS_Form1.cmd1Print.Size(1000,360)
+Gui.SS_Form1.cmd1Print.Zorder(0)
+Gui.SS_Form1.cmd1Print.Position(100,765)
+Gui.SS_Form1.cmd1Print.Enabled(True)
+Gui.SS_Form1.cmd1Print.FontName("Arial")
+Gui.SS_Form1.cmd1Print.FontSize(8)
+Gui.SS_Form1.cmd1Print.SetInternationalID(452800)
+Gui.SS_Form1.cmd1Print.TabStop(True)
+Gui.SS_Form1.cmd1Print.TabIndex(2)
+Gui.SS_Form1.cmd1Print.Tooltip("")
+Gui.SS_Form1.cmd1Print.ControlGroup(0)
+Gui.SS_Form1.cmd1Print.DefaultValue("")
+Gui.SS_Form1.cmd1Print.Event(click,cmd1_print_click)
+gui.SS_Form1.lbl_dtp1_year.LabelStretch(True)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Variable.Global.sFileDirRet.Declare(String)
+Variable.Global.s1095MergDir.Declare(String)
+Variable.Global.s1095TempFiles.Declare(String)
+Variable.Global.s1094TempFiles.Declare(String)
+Variable.Global.iRunID.Declare(Long)
+Variable.Global.iLogID.Declare(Long)
+Variable.Global.iTot1095C.Declare(Long)
+Variable.Global.iTot1095ALe.Declare(Long)
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'last updated 2/24/2016 fixes box 21 not being checked and table change issues
+'last updated 2/24/2016 for boxes 10 and 14 showing zeros instead of blanks
+'last updated 2/11/2016
+
+
+'Opening Main connection
+F.ODBC.connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.puser,V.Ambient.PPass,3000)
+'Shows year only within date picker
+'Formatting date picker to only show year 1/29
+Gui.SS_Form1.dtp1_year.CustomFormat("yyyy")
+Gui.SS_Form1..Show
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: BIR_PY_1094_1095-C.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Ss_form1_unload)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Main.End
+
+program.sub.cmd1_print_click.start
+F.Intrinsic.Control.SetErrorHandler("cmd1_print_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+gui.SS_Form1..Visible(False)
+
+'Select location to save file
+F.Intrinsic.UI.ShowSaveFileDialog("1094_1095C.pdf","*.pdf",V.Caller.GlobalDir,V.Global.sFileDirRet)
+
+'If a directory has been selected, continue to print pdf. Else, exit program
+F.Intrinsic.Control.If(V.Global.sFileDirRet,<>,"***CANCEL***")
+	'pulling in all 1095c records
+	F.Intrinsic.Control.CallSub(Load_rst_1095c)
+	'Pulling in all 1094c records
+	F.Intrinsic.Control.CallSub(Load_rst_1094c)
+F.Intrinsic.Control.Else
+	'Ending program
+	F.Intrinsic.Control.CallSub(Ss_form1_unload)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmd1_print_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: BIR_PY_1094_1095-C.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Ss_form1_unload)
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.cmd1_print_click.End
+
+program.sub.ss_form1_unload.start
+F.Intrinsic.Control.SetErrorHandler("ss_form1_unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'Ending program
+F.ODBC.Connection!conx.Close
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("ss_form1_unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: BIR_PY_1094_1095-C.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.ss_form1_unload.End
+
+Program.sub.Load_rst_1095c.start
+
+F.Intrinsic.Control.SetErrorHandler("ss_form1_unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'pulling in all 1095B records
+V.Local.Ord.Declare(Long)
+V.Local.sSQL.Declare(String)
+V.Local.sYr.Declare(String)
+V.Local.sFields.Declare(String)
+V.local.sFieldVals.Declare(String)
+V.local.sTempDir.Declare(String)
+V.Local.sFilesMerg.Declare(String)
+V.Local.sPDFDir.Declare(String)
+V.Local.dDateFormat.Declare(String)
+V.Local.sMonths.Declare(String)
+V.Local.sSSN.Declare(String)
+V.local.sSI.Declare(String)
+V.Local.i.Declare(Long)
+V.Local.i2.Declare(Long)
+V.Local.i3.Declare(Long)
+V.Local.iC.Declare(Long)
+V.Local.iC2.Declare(Long)
+V.Local.iNext.Declare(Long)
+V.Local.iRec.Declare(Long)
+V.Local.bRet.Declare(Boolean)
+V.Local.sMsg.Declare(String)
+V.Local.sAllMonths.Declare(String)
+V.Local.sJan.Declare(String)
+V.Local.sFeb.Declare(String)
+V.Local.sMar.Declare(String)
+V.Local.sApr.Declare(String)
+V.Local.sMay.Declare(String)
+V.Local.sJun.Declare(String)
+V.Local.sJul.Declare(String)
+V.Local.sAug.Declare(String)
+V.Local.sSep.Declare(String)
+V.Local.sOct.Declare(String)
+V.Local.sNov.Declare(String)
+V.Local.sDec.Declare(String)
+V.Local.sPSM.Declare(String)
+v.Local.iIndivCount.Declare(Long)
+v.Local.iFeb1stIndiv.Declare(String)
+V.Local.sName.Declare(String)
+V.Local.sFirst.Declare(String)
+V.Local.sMiddle.Declare(String)
+V.Local.sLast.Declare(String)
+V.Local.sCName.Declare(String)
+V.Local.sCFirst.Declare(String)
+V.Local.sCMiddle.Declare(String)
+V.Local.sCLast.Declare(String)
+v.Local.sFilter.Declare(String)
+v.Local.sRet.Declare(String)
+Gui.SS_Form1..Visible(False)
+
+'Formatting datepicker value to use in SQL statement
+F.Intrinsic.String.Format(V.Screen.SS_Form1!dtp1_year.Value,"yyyy",V.Local.sYr)
+'For Part I
+'Pulling in Payroll_1095C1 where filing year is the selected, then joining employee_mstr table.
+'Needed values for fields #1 thru #13 and Plan Start Month (Not numbered on the PDF)
+F.Intrinsic.String.Build("Select Rec_ID, Self_Ins, Employee_ID, Name as Emp_Name, Social_Security_No, b.Address as Emp_Address, b.City as Emp_City, b.State as Emp_State, b.Zip_Code as Emp_Country_Zip, Employer_Name, a.EIN as Employer_EIN, a.Address as Employer_Address, a.Telephone as Employer_Telephone, a.City as Employer_City, a.State as Employer_State, a.Country_Zip as Employer_Country_Zip, PSM From Payroll_1095C1 as a Left Join Employee_Mstr as b on a.Employee_ID = b. Employee Where Filing_Year = '{0}'",V.Local.sYr,V.Local.sSQL)
+Function.Data.DataTable.CreateFromSQL("dt1095C1A","conx",V.Local.sSql,True)
+
+'F.Data.DataTable.CreateFromSQL("dtEmpName","conX","Select Empl,Last,First,Left(Middle,1) As Middle From W2_Emp_Name")
+F.Data.DataTable.CreateFromSQL("dtEmpName","conX","Select Empl,Last,First,Left(Middle,1) As Middle From PYRL_EMP_NAME")
+
+F.Intrinsic.Control.If(V.DataTable.dt1095C1A.Exists,=,False,"OR",V.DataTable.dt1095C1A.RowCount--,<,0)
+	F.Intrinsic.Control.CallSub(Load_rst_1094c)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.If(V.DataTable.dt1095C1A.RowCount--,>=,0)
+	'For Part II,
+	'Needed values for field #14
+	'Offer of Coverage codes
+	'F.ODBC.Connection!conx.OpenLocalRecordsetRw("rst","Select Rec_ID, All_Months, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec  from PAYROLL_1095C2A")
+	Function.Data.DataTable.CreateFromSQL("dt1095C2A","conx","Select Rec_ID, All_Months, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec  from PAYROLL_1095C2A",True)
+
+	'Needed values for Section #15, Pulling in records from PAYROLL_1095C2B
+	Function.Data.DataTable.CreateFromSQL("dt1095C2B","conx","Select Rec_ID, All_Months, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec  from PAYROLL_1095C2B",True)
+
+	'Needed values for field #16 Pulling in records from PAYROLL_1095C2C
+	Function.Data.DataTable.CreateFromSQL("dt1095C2C","conx","Select Rec_ID, All_Months, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec  from PAYROLL_1095C2C",True)
+
+	'For Part III
+	'Needed values for values for fields #17 thru #34 pulling in records from Payroll_1095C3
+	Function.Data.DataTable.CreateFromSQL("dt1095C3","conx","Select Rec_ID, Filing_ID, Covered_Name, SSN, DOB, All_Months, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec from Payroll_1095C3 Order by Rec_ID",True)
+
+F.Intrinsic.Control.EndIf
+
+'Copying PDF template from Global\Busint
+F.Intrinsic.String.Build("{0}\Busint\PY_{1}_F1095C.pdf",V.Caller.GlobalDir,V.Local.sYr,V.Local.sPDFDir)
+
+F.Intrinsic.File.Exists(V.Local.sPDFDir,V.Local.bRet)
+F.Intrinsic.Control.If(V.Local.bRet,=,True)
+'Getting field names and storing them to variable as field references
+F.Automation.PDF.Open("F1095C",V.Local.sPDFDir)
+F.Automation.PDF.GetFieldNames("F1095C",V.Local.sFields)
+
+F.Automation.PDF.Close("F1095C")
+
+'Writing 1095-B PDF
+F.Intrinsic.Control.For(V.Local.iC,0,V.DataTable.dt1095C1A.RowCount--,1)
+	'Using this total to put on "total number of 1095B forms" field.
+	F.Intrinsic.Math.Add(V.Global.iTot1095C,1,V.Global.iTot1095C)
+	F.Automation.PDF.Open("F1095C",V.Local.sPDFDir)
+
+	'Building values for PDF fields.
+	'Part I, Page 1. km 
+	'Employee name, Employee SSN, Employer Name, Employer EIN, Employee Address, Employer Address, Employer Telephone,	
+	f.Intrinsic.Control.If(v.Local.sYr,=,"2016","OR",v.Local.sYr,=,"2017")
+		F.Intrinsic.String.Build("*!**!*{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}*!*{11}*!*{12}",v.DataTable.dt1095C1A(v.Local.iC).Emp_Name!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Social_Security_No!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Emp_Address!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Emp_City!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Emp_State!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Emp_Country_Zip!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_Name!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_EIN!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_Address!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_Telephone!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_City!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_State!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_Country_Zip!FieldVal,v.Local.sFieldVals)		
+	Function.Intrinsic.Control.ElseIf(V.Local.sYr,>,"2017")
+'		F.Intrinsic.String.Split(V.DataTable.dt1095C1A(V.Local.iC).Emp_Name!FieldValTrim," ",V.Local.sName)
+'		F.Intrinsic.Control.If(V.Local.sName,<>,"")
+'			F.Intrinsic.Control.If(V.Local.sName.UBound,=,2)
+'				V.Local.sFirst.Set(V.Local.sName(0))
+'				F.Intrinsic.String.Left(V.Local.sName(1),1,V.Local.sMiddle)
+'				V.Local.sLast.Set(V.Local.sName(2))
+'			F.Intrinsic.Control.ElseIf(V.Local.sName.UBound,<,2)
+'				V.Local.sFirst.Set(V.Local.sName(0))
+'				V.Local.sMiddle.Set("")
+'				V.Local.sLast.Set(V.Local.sName(1))
+'			F.Intrinsic.Control.ElseIf(V.Local.sName.UBound,>,2)
+'				V.Local.sFirst.Set(V.Local.sName(0))
+'				F.Intrinsic.String.Left(V.Local.sName(1),1,V.Local.sMiddle)
+'				V.Local.sLast.Set(V.Local.sName(2))
+'				V.Local.i2.Set(3)
+'				F.Intrinsic.Control.For(V.Local.i2,V.Local.i2,V.Local.sName.UBound,1)
+'					F.Intrinsic.String.Build("{0} {1}",V.Local.sLast,V.Local.sName(V.Local.i2),V.Local.sLast)
+'				F.Intrinsic.Control.Next(V.Local.i2)
+'			F.Intrinsic.Control.EndIf
+'		F.Intrinsic.Control.Else
+'			V.Local.sFirst.Set("")
+'			V.Local.sMiddle.Set("")
+'			V.Local.sLast.Set("")
+'		F.Intrinsic.Control.EndIf		
+		'grab from w2 emp name seperation.		 
+		Function.Intrinsic.Control.If(v.DataTable.dtEmpName.Exists)		
+			'select this employee we are on
+			f.Intrinsic.String.Build("[EMPL] = '{0}'",v.DataTable.dt1095C1A(v.Local.ic).Employee_ID!Fieldval,v.Local.sFilter)
+			F.Data.DataTable.Select("dtEmpName",v.Local.sFilter,v.Local.sRet)
+			Function.Intrinsic.Control.If(v.Local.sRet.Trim,<>,"***NORETURN***") 
+				f.Intrinsic.String.Split(v.Local.sRet,"*!*",v.Local.sRet)
+				v.Local.sFirst.Set(v.DataTable.dtEmpName(v.Local.sRet(0)).First!FieldvalTrim) 
+				v.Local.sLast.Set(v.DataTable.dtEmpName(v.Local.sRet(0)).Last!FIeldvalTrim) 
+				v.Local.sMiddle.Set(v.DataTable.dtEmpName(v.Local.sRet(0)).Middle!FieldvalTrim)
+			Function.Intrinsic.Control.Else
+				V.Local.sFirst.Set("")
+				V.Local.sMiddle.Set("")
+				V.Local.sLast.Set("")				
+			Function.Intrinsic.Control.EndIf		
+		Function.Intrinsic.Control.Else
+			V.Local.sFirst.Set("")
+			V.Local.sMiddle.Set("")
+			V.Local.sLast.Set("")			
+		Function.Intrinsic.Control.EndIf
+		F.Intrinsic.String.Build("0*!*0*!*{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}*!*{11}*!*{12}*!*{13}*!*{14}",V.Local.sFirst,V.Local.sMiddle,V.Local.sLast,v.DataTable.dt1095C1A(v.Local.iC).Social_Security_No!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Emp_Address!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Emp_City!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Emp_State!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Emp_Country_Zip!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_Name!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_EIN!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_Address!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_Telephone!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_City!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_State!FieldVal,v.DataTable.dt1095C1A(v.Local.iC).Employer_Country_Zip!FieldVal,v.Local.sFieldVals)
+		
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("*!**!*{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}",V.DataTable.dt1095C1A(V.Local.iC).Emp_Name!FieldVal,V.DataTable.dt1095C1A(V.Local.iC).Social_Security_No!FieldVal,V.DataTable.dt1095C1A(V.Local.iC).Employer_Name!FieldVal,V.DataTable.dt1095C1A(V.Local.iC).Employer_EIN!FieldVal,V.DataTable.dt1095C1A(V.Local.iC).Emp_Address!FieldVal,V.DataTable.dt1095C1A(V.local.iC).Employer_Address!FieldVal,V.DataTable.dt1095C1A(V.Local.iC).Employer_Telephone!FieldVal,V.Local.sFieldVals)		
+	Function.Intrinsic.Control.EndIf
+
+	'Employee City, Employee State, Employee Country Zip, Employer City, Employer State, Employer Country Zip, Plan Start Month
+	'2/26/16, commented out for testing purposes
+	'padding with 0's
+	F.Intrinsic.Control.If(V.DataTable.dt1095C1A(V.Local.iC).PSM!FieldVal,>=,"0")
+		F.Intrinsic.String.LPad(V.DataTable.dt1095C1A(V.Local.iC).PSM!FieldVal,"0",2,V.Local.sPSM)
+	F.Intrinsic.Control.Else
+		V.Local.sPSM.Set(" ")
+	F.Intrinsic.Control.Endif
+
+	F.Intrinsic.Control.If(v.Local.sYr,=,"2016","OR",v.Local.sYr.Trim,>=,"2017")
+		f.Intrinsic.String.Build("{0}*!*{1}",V.Local.sFieldVals,V.Local.sPSM,V.Local.sFieldVals)		
+	Function.Intrinsic.Control.Else 
+		F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}",V.Local.sFieldVals,V.DataTable.dt1095C1A(V.Local.iC).Emp_City!FieldVal,V.DataTable.dt1095C1A(V.Local.iC).Emp_State!FieldVal,V.DataTable.dt1095C1A(V.Local.iC).Emp_Country_Zip!FieldVal,V.DataTable.dt1095C1A(V.Local.iC).Employer_City!FieldVal,V.DataTable.dt1095C1A(V.Local.iC).Employer_State!FieldVal,V.DataTable.dt1095C1A(V.Local.iC).Employer_Country_Zip!FieldVal,V.Local.sPSM,V.Local.sFieldVals)
+	Function.Intrinsic.Control.EndIf
+
+	'Part II
+	'Within this For loop, we're flagging all records with matching rec_ids, then copying those UDT records to a Copy UDT, so it'll be easier to set these values within the PDF.
+	'The records being copied below is for field #14 with a matching Rec_Id
+	F.Data.DataTable.Clone("dt1095C2A","dt1095C2ACopy",True)
+	F.Intrinsic.Control.For(V.Local.Ord,0,V.DataTable.dt1095C2A.RowCount--,1)
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2A(V.Local.Ord).Rec_ID!FieldVal,=,V.DataTable.dt1095C1A(V.local.iC).Rec_ID!FieldVal)
+			F.Data.DataTable.AddRow("dt1095C2ACopy","Rec_Id",V.DataTable.dt1095C2A(V.Local.Ord).Rec_ID!FieldVal,"All_Months",V.DataTable.dt1095C2A(V.Local.Ord).All_Months!FieldVal,"Jan",V.DataTable.dt1095C2A(V.Local.Ord).Jan!FieldVal,"Feb",V.DataTable.dt1095C2A(V.Local.Ord).Feb!FieldVal,"Mar",V.DataTable.dt1095C2A(V.Local.Ord).Mar!FieldVal,"Apr",V.DataTable.dt1095C2A(V.Local.Ord).Apr!FieldVal,"May",V.DataTable.dt1095C2A(V.Local.Ord).May!FieldVal,"Jun",V.DataTable.dt1095C2A(V.Local.Ord).Jun!FieldVal,"Jul",V.DataTable.dt1095C2A(V.Local.Ord).Jul!FieldVal,"Aug",V.DataTable.dt1095C2A(V.Local.Ord).Aug!FieldVal,"Sep",V.DataTable.dt1095C2A(V.Local.Ord).Sep!FieldVal,"Oct",V.DataTable.dt1095C2A(V.Local.Ord).Oct!FieldVal,"Nov",V.DataTable.dt1095C2A(V.Local.Ord).Nov!FieldVal,"Dec",V.DataTable.dt1095C2A(V.Local.Ord).Dec!FieldVal)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.Ord)
+
+	'The records being copied are for field #15
+	V.Local.Ord.Set(0)
+	F.Data.DataTable.Clone("dt1095C2B","dt1095C2BCopy",True)
+	F.Intrinsic.Control.For(V.Local.Ord,0,V.DataTable.dt1095C2B.RowCount--,1)
+	
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2B(V.Local.Ord).Rec_ID!FieldVal,=,V.DataTable.dt1095C1A(V.local.iC).Rec_ID!FieldVal)
+			F.Data.DataTable.AddRow("dt1095C2BCopy","Rec_Id",V.DataTable.dt1095C2B(V.Local.Ord).Rec_ID!FieldVal,"All_Months",V.DataTable.dt1095C2B(V.Local.Ord).All_Months!FieldVal,"Jan",V.DataTable.dt1095C2B(V.Local.Ord).Jan!FieldVal,"Feb",V.DataTable.dt1095C2B(V.Local.Ord).Feb!FieldVal,"Mar",V.DataTable.dt1095C2B(V.Local.Ord).Mar!FieldVal,"Apr",V.DataTable.dt1095C2B(V.Local.Ord).Apr!FieldVal,"May",V.DataTable.dt1095C2B(V.Local.Ord).May!FieldVal,"Jun",V.DataTable.dt1095C2B(V.Local.Ord).Jun!FieldVal,"Jul",V.DataTable.dt1095C2B(V.Local.Ord).Jul!FieldVal,"Aug",V.DataTable.dt1095C2B(V.Local.Ord).Aug!FieldVal,"Sep",V.DataTable.dt1095C2B(V.Local.Ord).Sep!FieldVal,"Oct",V.DataTable.dt1095C2B(V.Local.Ord).Oct!FieldVal,"Nov",V.DataTable.dt1095C2B(V.Local.Ord).Nov!FieldVal,"Dec",V.DataTable.dt1095C2B(V.Local.Ord).Dec!FieldVal)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.Ord)
+
+	'Records copied below are for field #16
+	V.Local.Ord.Set(0)
+	F.Data.DataTable.Clone("dt1095C2C","dt1095C2CCopy",True)
+	F.Intrinsic.Control.For(V.Local.Ord,0,V.DataTable.dt1095C2C.RowCount--,1)
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2C(V.Local.Ord).Rec_ID!FieldVal,=,V.DataTable.dt1095C1A(V.local.iC).Rec_ID!FieldVal)
+			F.Data.DataTable.AddRow("dt1095C2CCopy","Rec_Id",V.DataTable.dt1095C2C(V.Local.Ord).Rec_ID!FieldVal,"All_Months",V.DataTable.dt1095C2C(V.Local.Ord).All_Months!FieldVal,"Jan",V.DataTable.dt1095C2C(V.Local.Ord).Jan!FieldVal,"Feb",V.DataTable.dt1095C2C(V.Local.Ord).Feb!FieldVal,"Mar",V.DataTable.dt1095C2C(V.Local.Ord).Mar!FieldVal,"Apr",V.DataTable.dt1095C2C(V.Local.Ord).Apr!FieldVal,"May",V.DataTable.dt1095C2C(V.Local.Ord).May!FieldVal,"Jun",V.DataTable.dt1095C2C(V.Local.Ord).Jun!FieldVal,"Jul",V.DataTable.dt1095C2C(V.Local.Ord).Jul!FieldVal,"Aug",V.DataTable.dt1095C2C(V.Local.Ord).Aug!FieldVal,"Sep",V.DataTable.dt1095C2C(V.Local.Ord).Sep!FieldVal,"Oct",V.DataTable.dt1095C2C(V.Local.Ord).Oct!FieldVal,"Nov",V.DataTable.dt1095C2C(V.Local.Ord).Nov!FieldVal,"Dec",V.DataTable.dt1095C2C(V.Local.Ord).Dec!FieldVal)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.Ord)
+
+	'Part II
+	F.Intrinsic.Control.If(V.DataTable.dt1095C2ACopy.RowCount--,>=,0)
+		'#14 - All months, Jan Thru Dec
+		F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}*!*{11}*!*{12}*!*{13}",V.Local.sFieldVals,V.DataTable.dt1095C2ACopy(0).All_Months!FieldVal,V.DataTable.dt1095C2ACopy(0).Jan!FieldVal,V.DataTable.dt1095C2ACopy(0).Feb!FieldVal,V.DataTable.dt1095C2ACopy(0).Mar!FieldVal,V.DataTable.dt1095C2ACopy(0).Apr!FieldVal,V.DataTable.dt1095C2ACopy(0).May!FieldVal,V.DataTable.dt1095C2ACopy(0).Jun!FieldVal,V.DataTable.dt1095C2ACopy(0).Jul!FieldVal,V.DataTable.dt1095C2ACopy(0).Aug!FieldVal,V.DataTable.dt1095C2ACopy(0).Sep!FieldVal,V.DataTable.dt1095C2ACopy(0).Oct!FieldVal,V.DataTable.dt1095C2ACopy(0).Nov!FieldVal,V.DataTable.dt1095C2ACopy(0).Dec!FieldVal,V.Local.sFieldVals)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+	F.Intrinsic.Control.EndIf
+	
+	'#15 - All months, Jan Thru Dec
+	V.Local.sAllMonths.Set("")
+	V.Local.sJan.Set("")
+	V.Local.sFeb.Set("")
+	V.Local.sMar.Set("")
+	V.Local.sApr.Set("")
+	V.Local.sMay.Set("")
+	V.Local.sJun.Set("")
+	V.Local.sJul.Set("")
+	V.Local.sAug.Set("")
+	V.Local.sSep.Set("")
+	V.Local.sOct.Set("")
+	V.Local.sNov.Set("")
+	V.Local.sDec.Set("")
+	F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy.RowCount--,>=,0)
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy(0).All_Months!FieldValString,>,"")
+			F.Intrinsic.String.Format(V.DataTable.dt1095C2BCopy(0).All_Months!FieldVal,"#####0.00",V.Local.sAllMonths)
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy(0).Jan!FieldValString,>,"")
+			F.Intrinsic.String.Format(V.DataTable.dt1095C2BCopy(0).Jan!FieldVal,"#####0.00",V.Local.sJan)
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy(0).Feb!FieldValString,>,"")
+			F.Intrinsic.String.Format(V.DataTable.dt1095C2BCopy(0).Feb!FieldVal,"#####0.00",V.Local.sFeb)
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy(0).Mar!FieldValString,>,"")
+			F.Intrinsic.String.Format(V.DataTable.dt1095C2BCopy(0).Mar!FieldVal,"######0.00",V.Local.sMar)
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy(0).Apr!FieldValString,>,"")
+			F.Intrinsic.String.Format(V.DataTable.dt1095C2BCopy(0).Apr!FieldVal,"#####0.00",V.Local.sApr)
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy(0).May!FieldValString,>,"")
+			F.Intrinsic.String.Format(V.DataTable.dt1095C2BCopy(0).May!FieldVal,"#####0.00",V.Local.sMay)
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy(0).Jun!FieldValString,>,"")
+			F.Intrinsic.String.Format(V.DataTable.dt1095C2BCopy(0).Jun!FieldVal,"#####0.00",V.Local.sJun)
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy(0).Jul!FieldValString,>,"")
+			F.Intrinsic.String.Format(V.DataTable.dt1095C2BCopy(0).Jul!FieldVal,"#####0.00",V.Local.sJul)
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy(0).Aug!FieldValString,>,"")
+			F.Intrinsic.String.Format(V.DataTable.dt1095C2BCopy(0).Aug!FieldVal,"#####0.00",V.Local.sAug)
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy(0).Sep!FieldValString,>,"")
+			F.Intrinsic.String.Format(V.DataTable.dt1095C2BCopy(0).Sep!FieldVal,"#####0.00",V.Local.sSep)
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy(0).Oct!FieldValString,>,"")
+			F.Intrinsic.String.Format(V.DataTable.dt1095C2BCopy(0).Oct!FieldVal,"#####0.00",V.Local.sOct)
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy(0).Nov!FieldValString,>,"")
+			F.Intrinsic.String.Format(V.DataTable.dt1095C2BCopy(0).Nov!FieldVal,"#####0.00",V.Local.sNov)
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy(0).Dec!FieldValString,>,"")
+			F.Intrinsic.String.Format(V.DataTable.dt1095C2BCopy(0).Dec!FieldVal,"#####0.00",V.Local.sDec)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndIf
+	F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}*!*{11}*!*{12}*!*{13}",V.Local.sFieldVals,V.Local.sAllMonths,V.Local.sJan,V.Local.sFeb,V.Local.sMar,V.Local.sApr,V.Local.sMay,V.Local.sJun,V.Local.sJul,V.Local.sAug,V.Local.sSep,V.Local.sOct,V.Local.sNov,V.Local.sDec,V.Local.sFieldVals)
+	
+	'#16 - All months, Jan Thru Dec
+	'Self-Insured coverage value requires either a 1 For YES or Blank for NO
+	F.Intrinsic.Control.If(V.DataTable.dt1095C1A(V.Local.iC).Self_Ins!FieldVal,=,False)
+		V.Local.sSI.Set("")
+	F.Intrinsic.Control.Else
+		V.Local.sSI.Set("1")
+	F.Intrinsic.Control.Endif
+	F.Intrinsic.Control.If(V.DataTable.dt1095C2CCopy.RowCount--,>=,0)	
+		F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}*!*{11}*!*{12}*!*{13}*!*{14}",V.Local.sFieldVals,V.DataTable.dt1095C2CCopy(0).All_Months!FieldVal,V.DataTable.dt1095C2CCopy(0).Jan!FieldVal,V.DataTable.dt1095C2CCopy(0).Feb!FieldVal,V.DataTable.dt1095C2CCopy(0).Mar!FieldVal,V.DataTable.dt1095C2CCopy(0).Apr!FieldVal,V.DataTable.dt1095C2CCopy(0).May!FieldVal,V.DataTable.dt1095C2CCopy(0).Jun!FieldVal,V.DataTable.dt1095C2CCopy(0).Jul!FieldVal,V.DataTable.dt1095C2CCopy(0).Aug!FieldVal,V.DataTable.dt1095C2CCopy(0).Sep!FieldVal,V.DataTable.dt1095C2CCopy(0).Oct!FieldVal,V.DataTable.dt1095C2CCopy(0).Nov!FieldVal,V.DataTable.dt1095C2CCopy(0).Dec!FieldVal,V.Local.sSI,V.Local.sFieldVals)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+	F.Intrinsic.Control.EndIf
+	
+	'Part III
+	'Fields #17 Thru #34
+	F.Intrinsic.Control.If(V.DataTable.dt1095C3.RowCount--,>=,0)
+		V.Local.Ord.Set(0)
+		F.Data.DataTable.Clone("dt1095C3","dt1095C3Copy",True)
+		F.Intrinsic.Control.For(V.Local.Ord,0,V.DataTable.dt1095C3.RowCount--,1)
+			F.Intrinsic.Control.If(V.DataTable.dt1095C3(V.Local.Ord).Filing_ID!FieldVal,=,V.DataTable.dt1095C1A(V.local.iC).Rec_ID!FieldVal)
+				F.Data.DataTable.AddRow("dt1095C3Copy","Rec_Id",V.DataTable.dt1095C3(V.Local.Ord).Rec_ID!FieldVal,"Filing_ID",V.DataTable.dt1095C3(V.Local.Ord).Filing_ID!FieldVal,"Covered_Name",V.DataTable.dt1095C3(V.Local.Ord).Covered_Name!FieldVal,"SSN",V.DataTable.dt1095C3(V.Local.Ord).SSN!FieldVal,"DOB",V.DataTable.dt1095C3(V.Local.Ord).DOB!FieldVal,"All_Months",V.DataTable.dt1095C3(V.Local.Ord).All_Months!FieldVal,"Jan",V.DataTable.dt1095C3(V.Local.Ord).Jan!FieldVal,"Feb",V.DataTable.dt1095C3(V.Local.Ord).Feb!FieldVal,"Mar",V.DataTable.dt1095C3(V.Local.Ord).Mar!FieldVal,"Apr",V.DataTable.dt1095C3(V.Local.Ord).Apr!FieldVal,"May",V.DataTable.dt1095C3(V.Local.Ord).May!FieldVal,"Jun",V.DataTable.dt1095C3(V.Local.Ord).Jun!FieldVal,"Jul",V.DataTable.dt1095C3(V.Local.Ord).Jul!FieldVal,"Aug",V.DataTable.dt1095C3(V.Local.Ord).Aug!FieldVal,"Sep",V.DataTable.dt1095C3(V.Local.Ord).Sep!FieldVal,"Oct",V.DataTable.dt1095C3(V.Local.Ord).Oct!FieldVal,"Nov",V.DataTable.dt1095C3(V.Local.Ord).Nov!FieldVal,"Dec",V.DataTable.dt1095C3(V.Local.Ord).Dec!FieldVal)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.Next(V.Local.Ord)
+	F.Intrinsic.Control.EndIf
+
+	F.Intrinsic.Control.If(V.DataTable.dt1095C3Copy.Exists,=,True)
+		F.Intrinsic.Control.If(V.DataTable.dt1095C3Copy.RowCount--,<,0)
+			v.Local.iIndivCount.set(0)
+			F.Intrinsic.Control.For(V.Local.i,0,17,1)
+				F.Intrinsic.Control.If(V.Local.sYr,>,"2017")
+						F.Intrinsic.Control.If(V.Local.i,=,6)
+							F.Intrinsic.String.Build("{0}*!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+						F.Intrinsic.Control.EndIf
+						F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+					F.Intrinsic.Control.Else
+						F.Intrinsic.Control.If(V.Local.i,=,6)
+							F.Intrinsic.String.Build("{0}*!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+						F.Intrinsic.Control.EndIf
+						F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+					F.Intrinsic.Control.EndIf
+			F.Intrinsic.Control.Next(V.Local.i)
+			
+			'F.Intrinsic.String.Build("{0}\1095c_Temp{1}.pdf",V.Caller.LocalGSSTempDir,V.Local.iRec,V.Global.s1095TempFiles)
+		F.Intrinsic.Control.Else
+			v.Local.iIndivCount.set(0)
+			'Update: the form fields are weird on the 2016 doc. So pos 104 (split out) is the Feb checkbox for the part III first person. 
+			F.Intrinsic.Control.For(V.Local.iC2,0,V.DataTable.dt1095C3Copy.RowCount--,1)
+				F.Intrinsic.Control.If(V.Local.sYr,>,"2017")
+		
+					'Splitting Employee Name into First name, Middle name and Last name
+					F.Intrinsic.String.Split(V.DataTable.dt1095C3Copy(V.Local.iC2).Covered_Name!FieldValTrim," ",V.Local.sCName)
+					F.Intrinsic.Control.If(V.Local.sCName,<>,"")
+						F.Intrinsic.Control.If(V.Local.sCName.UBound,=,2)
+							V.Local.sCFirst.Set(V.Local.sCName(0))
+							F.Intrinsic.String.Left(V.Local.sCName(1),1,V.Local.sCName(1))
+							V.Local.sCMiddle.Set(V.Local.sCName(1))
+							V.Local.sCLast.Set(V.Local.sCName(2))
+						F.Intrinsic.Control.ElseIf(V.Local.sCName.UBound,<,2)
+							V.Local.sCFirst.Set(V.Local.sCName(0))
+							V.Local.sCMiddle.Set("")
+							V.Local.sCLast.Set(V.Local.sCName(1))
+						F.Intrinsic.Control.ElseIf(V.Local.sCName.UBound,>,2)
+							V.Local.sCFirst.Set(V.Local.sCName(0))
+							F.Intrinsic.String.Left(V.Local.sCName(1),1,V.Local.sCMiddle)
+							V.Local.sCLast.Set(V.Local.sCName(2))
+							V.Local.i3.Set(3)
+							F.Intrinsic.Control.For(V.Local.i3,V.Local.i3,V.Local.sCName.UBound,1)
+								F.Intrinsic.String.Build("{0} {1}",V.Local.sCLast,V.Local.sCName(V.Local.i3),V.Local.sCLast)
+							F.Intrinsic.Control.Next(V.Local.i3)
+						F.Intrinsic.Control.EndIf
+					F.Intrinsic.Control.Else
+						V.Local.sCFirst.Set("")
+						V.Local.sCMiddle.Set("")
+						V.Local.sCLast.Set("")
+					F.Intrinsic.Control.EndIf
+				
+					'If we're on the fifth Covered Individual record and the next record (which starts on page 3) is NOT blank, then set Employee Name and SSN at the top of Page 3.
+					F.Intrinsic.Control.If(V.Local.iC2,=,6,"AND",V.DataTable.dt1095C3Copy(6).Covered_Name!FieldVal,<>,"")
+						F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}",V.Local.sFieldVals,V.Local.sFirst,V.Local.sMiddle,V.Local.sLast,V.DataTable.dt1095C1A(V.Local.iC).Social_Security_No!FieldVal,V.Local.sFieldVals)
+						'F.Intrinsic.String.Build("{0}*!*{1}*!*{2}",V.Local.sFieldVals,V.uGlobal.u1095C1A(V.Local.iC)!Emp_Name,"123456789",V.Local.sFieldVals)
+					F.Intrinsic.Control.Elseif(V.Local.iC2,=,6,"AND",V.DataTable.dt1095C3Copy(6).Covered_Name!FieldVal,=,"")
+						F.Intrinsic.String.Build("{0}*!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+					F.Intrinsic.Control.Endif
+			
+					'Formatting DOB
+					F.Intrinsic.String.Format(V.DataTable.dt1095C3Copy(V.Local.iC2).DOB!FieldVal,"MM/DD/YYYY",V.Local.dDateFormat)
+					F.Intrinsic.Control.If(V.Local.dDateFormat,=,"12/30/1899","OR",V.Local.dDateFormat,=,"01/01/1900")
+						V.Local.dDateFormat.Set("")
+					F.Intrinsic.Control.Endif
+					'Setting SSN with nothing if it's a zero within Pervasive. This could happen if the person enters their DOB instead of their SSN which they're able to do.
+					'SSN and EIN truncation not allowed according to i109495c.pdf, paragraph five, line six.
+					F.Intrinsic.Control.If(V.DataTable.dt1095C3Copy(V.Local.iC2).SSN!FieldVal,=,"0")
+						V.Local.sSSN.Set("")
+					F.Intrinsic.Control.Else
+						V.Local.sSSN.Set(V.DataTable.dt1095C3Copy(V.Local.iC2).SSN!FieldVal)
+					F.Intrinsic.Control.Endif
+					'Field #17, Name, SSN, DOB, All Months
+					F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}",V.Local.sFieldVals,V.Local.sCFirst,V.Local.sCMiddle,V.Local.sCLast,V.Local.sSSN,V.Local.dDateFormat,V.Local.sFieldVals)
+				F.Intrinsic.Control.Else
+					'If we're on the fifth Covered Individual record and the next record (which starts on page 3) is NOT blank, then set Employee Name and SSN at the top of Page 3.
+					F.Intrinsic.Control.If(V.Local.iC2,=,6,"AND",V.DataTable.dt1095C3Copy(6).Covered_Name!FieldVal,<>,"")
+						F.Intrinsic.String.Build("{0}*!*{1}*!*{2}",V.Local.sFieldVals,V.DataTable.dt1095C1A(V.Local.iC).Emp_Name!FieldVal,V.DataTable.dt1095C1A(V.Local.iC).Social_Security_No!FieldVal,V.Local.sFieldVals)
+						'F.Intrinsic.String.Build("{0}*!*{1}*!*{2}",V.Local.sFieldVals,V.uGlobal.u1095C1A(V.Local.iC)!Emp_Name,"123456789",V.Local.sFieldVals)
+					F.Intrinsic.Control.Elseif(V.Local.iC2,=,6,"AND",V.DataTable.dt1095C3Copy(6).Covered_Name!FieldVal,=,"")
+						F.Intrinsic.String.Build("{0}*!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+					F.Intrinsic.Control.Endif
+			
+					'Formatting DOB
+					F.Intrinsic.String.Format(V.DataTable.dt1095C3Copy(V.Local.iC2).DOB!FieldVal,"MM/DD/YYYY",V.Local.dDateFormat)
+					F.Intrinsic.Control.If(V.Local.dDateFormat,=,"12/30/1899","OR",V.Local.dDateFormat,=,"01/01/1900")
+						V.Local.dDateFormat.Set("")
+					F.Intrinsic.Control.Endif
+					'Setting SSN with nothing if it's a zero within Pervasive. This could happen if the person enters their DOB instead of their SSN which they're able to do.
+					'SSN and EIN truncation not allowed according to i109495c.pdf, paragraph five, line six.
+					F.Intrinsic.Control.If(V.DataTable.dt1095C3Copy(V.Local.iC2).SSN!FieldVal,=,"0")
+						V.Local.sSSN.Set("")
+					F.Intrinsic.Control.Else
+						V.Local.sSSN.Set(V.DataTable.dt1095C3Copy(V.Local.iC2).SSN!FieldVal)
+					F.Intrinsic.Control.Endif
+					'Field #17, Name, SSN, DOB, All Months
+					F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}",V.Local.sFieldVals,V.DataTable.dt1095C3Copy(V.Local.iC2).Covered_Name!FieldVal,V.Local.sSSN,V.Local.dDateFormat,V.Local.sFieldVals)
+				F.Intrinsic.Control.EndIf
+	
+				'2016 Update: the form fields are weird on the 2016 doc. So pos 104 (split out) is the Feb checkbox for the part III first person. 
+				Function.Intrinsic.Control.If(v.Local.sYr,=,"2016","OR",v.Local.sYr,=,"2017")
+					F.Intrinsic.Control.If(v.Local.iIndivCount,=,0,"AND",V.DataTable.dt1095C3Copy.RowCount,>=,3)
+						'Feb is within the third persons section.
+						v.Local.iFeb1stIndiv.Set(v.DataTable.dt1095C3Copy(v.Local.iC2).Feb!FieldVal)			
+						'Field #17 Jan - Dec records
+						F.Intrinsic.String.Build("{0}*!*{1}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}*!*{11}*!*{12}",V.DataTable.dt1095C3Copy(V.Local.iC2).All_Months!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jan!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Feb!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Mar!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Apr!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).May!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jun!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jul!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Aug!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Sep!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Oct!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Nov!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Dec!FieldValTrim,V.Local.sMonths)
+					Function.Intrinsic.Control.ElseIf(v.Local.iIndivCount,=,2,"AND",V.DataTable.dt1095C3Copy.RowCount,>=,3)
+						'Field #17 Jan - Dec records
+						F.Intrinsic.String.Build("{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}*!*{11}*!*{12}*!*{0}*!*{13}",V.DataTable.dt1095C3Copy(V.Local.iC2).All_Months!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jan!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Feb!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Mar!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Apr!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).May!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jun!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jul!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Aug!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Sep!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Oct!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Nov!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Dec!FieldValTrim,v.Local.iFeb1stIndiv,V.Local.sMonths)
+					Function.Intrinsic.Control.ElseIf(v.Local.iIndivCount,=,5,"AND",V.DataTable.dt1095C3Copy.RowCount,>=,6)
+						'6 count is off as well, we have all checkbox at the end and the others at the front.
+						F.Intrinsic.String.Build("{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}*!*{11}*!*{12}*!*{0}",V.DataTable.dt1095C3Copy(V.Local.iC2).All_Months!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jan!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Feb!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Mar!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Apr!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).May!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jun!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jul!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Aug!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Sep!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Oct!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Nov!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Dec!FieldValTrim,V.Local.sMonths)
+					Function.Intrinsic.Control.Else
+						'Field #17 Jan - Dec records
+						F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}*!*{11}*!*{12}",V.DataTable.dt1095C3Copy(V.Local.iC2).All_Months!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jan!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Feb!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Mar!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Apr!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).May!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jun!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jul!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Aug!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Sep!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Oct!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Nov!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Dec!FieldValTrim,V.Local.sMonths)
+					Function.Intrinsic.Control.EndIf		
+				Function.Intrinsic.Control.Else
+					F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}*!*{11}*!*{12}",V.DataTable.dt1095C3Copy(V.Local.iC2).All_Months!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jan!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Feb!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Mar!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Apr!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).May!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jun!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Jul!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Aug!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Sep!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Oct!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Nov!FieldValTrim,V.DataTable.dt1095C3Copy(V.Local.iC2).Dec!FieldValTrim,V.Local.sMonths)
+				Function.Intrinsic.Control.EndIf
+				
+				'Need to replace 0's with "", since the PDF will only take blank values for unchecked fields.
+				F.Intrinsic.String.Replace(V.Local.sMonths,"0","",V.Local.sMonths)
+				F.Intrinsic.String.Build("{0}*!*{1}",V.Local.sFieldVals,V.Local.sMonths,V.Local.sFieldVals)
+				f.Intrinsic.Math.Add(v.Local.iIndivCount,1,v.Local.iIndivCount)
+			F.Intrinsic.Control.Next(V.Local.iC2)
+			
+			F.Intrinsic.Control.If(V.DataTable.dt1095C3Copy.RowCount--,<>,17)
+				F.Intrinsic.Control.For(V.Local.iC2,V.Local.iC2,17,1)
+					F.Intrinsic.Control.If(V.Local.sYr,>,"2017")
+						F.Intrinsic.Control.If(V.Local.iC2,=,6)
+							F.Intrinsic.String.Build("{0}*!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+						F.Intrinsic.Control.EndIf
+						F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+					F.Intrinsic.Control.Else
+						F.Intrinsic.Control.If(V.Local.iC2,=,6)
+							F.Intrinsic.String.Build("{0}*!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+						F.Intrinsic.Control.EndIf
+						F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+					F.Intrinsic.Control.EndIf
+				F.Intrinsic.Control.Next(V.Local.iC2)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.EndIf
+	
+'		F.Intrinsic.Control.If(V.Local.iC,=,-1)
+'			F.Intrinsic.String.Build("{0}\1095c_Temp{1}.pdf",V.Caller.LocalGSSTempDir,V.Local.iRec,V.Global.s1095TempFiles)
+'		F.Intrinsic.Control.Elseif(V.Local.iC,=,0)
+'			F.Intrinsic.String.Build("{0}\1095c_Temp{1}.pdf",V.Caller.LocalGSSTempDir,V.Local.iRec,V.Global.s1095TempFiles)
+'		F.Intrinsic.Control.Elseif(V.Local.iC,>,0)
+'			F.Intrinsic.String.Build("{0}*!*{1}\1095c_Temp{2}.pdf",V.Global.s1095TempFiles,V.Caller.LocalGSSTempDir,V.Local.iRec,V.Global.s1095TempFiles)
+'		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Else
+		v.Local.iIndivCount.set(0)
+		F.Intrinsic.Control.For(V.Local.i,0,17,1)
+			F.Intrinsic.Control.If(V.Local.sYr,>,"2017")
+					F.Intrinsic.Control.If(V.Local.i,=,6)
+						F.Intrinsic.String.Build("{0}*!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+					F.Intrinsic.Control.EndIf
+					F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+				F.Intrinsic.Control.Else
+					F.Intrinsic.Control.If(V.Local.i,=,6)
+						F.Intrinsic.String.Build("{0}*!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+					F.Intrinsic.Control.EndIf
+					F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+				F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.Next(V.Local.i)
+		
+		'F.Intrinsic.String.Build("{0}\1095c_Temp{1}.pdf",V.Caller.LocalGSSTempDir,V.Local.iRec,V.Global.s1095TempFiles)
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.If(V.Local.iC,=,-1)
+		F.Intrinsic.String.Build("{0}\1095c_Temp{1}.pdf",V.Caller.LocalGSSTempDir,V.Local.iRec,V.Global.s1095TempFiles)
+	F.Intrinsic.Control.Elseif(V.Local.iC,=,0)
+		F.Intrinsic.String.Build("{0}\1095c_Temp{1}.pdf",V.Caller.LocalGSSTempDir,V.Local.iRec,V.Global.s1095TempFiles)
+	F.Intrinsic.Control.Elseif(V.Local.iC,>,0)
+		F.Intrinsic.String.Build("{0}*!*{1}\1095c_Temp{2}.pdf",V.Global.s1095TempFiles,V.Caller.LocalGSSTempDir,V.Local.iRec,V.Global.s1095TempFiles)
+	F.Intrinsic.Control.EndIf
+
+	'Setting the form values and fields to the user's PDF copy
+	F.Intrinsic.String.Build("{0}\1095c_Temp{1}.pdf",V.Caller.LocalGSSTempDir,V.Local.iRec,V.Local.sTempDir)
+	F.Intrinsic.File.Exists(V.Local.sTempDir,V.Local.bRet)
+	F.Intrinsic.Control.If(V.Local.bRet,=,True)
+		F.Intrinsic.File.DeleteFile(V.Local.sTempDir)
+	F.Intrinsic.Control.EndIf
+
+	'F.Intrinsic.File.CopyFile(V.Local.sPDFDir,V.Local.sTempDir)
+	F.Automation.PDF.SetFormFields("F1095C",V.Local.sTempDir,V.Local.sFields,V.Local.sFieldVals,True)
+	F.Automation.PDF.Close("F1095C")
+
+	F.Intrinsic.Math.Add(V.Local.iRec,1,V.Local.iRec)
+
+	F.Intrinsic.Control.If(V.DataTable.dt1095C2ACopy.Exists,=,True)
+		F.Data.DataTable.Close("dt1095C2ACopy")
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.If(V.DataTable.dt1095C2BCopy.Exists,=,True)
+		F.Data.DataTable.Close("dt1095C2BCopy")
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.If(V.DataTable.dt1095C2CCopy.Exists,=,True)
+		F.Data.DataTable.Close("dt1095C2CCopy")
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.If(V.DataTable.dt1095C3Copy.Exists,=,True)
+		F.Data.DataTable.Close("dt1095C3Copy")
+	F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.Next(V.Local.iC)
+
+'Open Merged PDF, use a reference name and fully qualified path
+F.Automation.PDF.Open("F1095C",V.Local.sPDFDir)
+'Final 1095-B Merge FQP, to be used to merge with 1094-B Forms
+F.Intrinsic.String.Build("{0}\1095C_MergeFile.pdf",V.Caller.LocalGSSTempDir,V.Global.s1095MergDir)
+'Perfom PDF Merge
+F.Automation.PDF.Merge(V.Global.s1095TempFiles,V.Global.s1095MergDir)
+F.Automation.PDF.Close("F1095C")
+
+F.Intrinsic.Control.Else
+	F.Intrinsic.String.Build("1094/1095C Form for {0} is not yet released.",V.Local.sYr,V.Local.sMsg)
+	F.Intrinsic.UI.Msgbox(V.Local.sMsg)
+		F.Intrinsic.Control.CallSub(Ss_form1_unload)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("ss_form1_unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: BIR_PY_1094_1095-C.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Ss_form1_unload)
+Function.Intrinsic.Control.EndIf
+
+program.sub.Load_rst_1095c.End
+
+Program.Sub.Load_rst_1094c.Start
+F.Intrinsic.Control.SetErrorHandler("Load_rst_1094c_Err")
+F.Intrinsic.Control.ClearErrors
+V.Local.sError.Declare(String)
+V.Local.sName.Declare(String)
+V.Local.sSQL.Declare(String)
+V.Local.sYr.Declare(String)
+V.local.sPDFDir.Declare(String)
+V.Local.sFields.Declare(String)
+V.Local.sFieldVals.Declare(String)
+V.Local.sTempDir.Declare(String)
+V.local.sFilesMerg.Declare(String)
+V.Local.s1094MergDir.Declare(String)
+V.Local.sFinalFQP.Declare(String)
+V.Local.sMember.Declare(String)
+V.local.sCoE.Declare(String)
+V.Local.sPartIII.Declare(String)
+V.Local.iRec.Declare(Long)
+V.Local.i.Declare(Long)
+V.Local.iC.Declare(Long)
+V.Local.iC2.Declare(Long)
+V.Local.iHdl.Declare(Long)
+V.Local.iNo.Declare(Long)
+V.Local.iTot1095.Declare(Long)
+V.Local.bRet.Declare(Boolean,0)
+V.Local.bNoData.Declare(Boolean,0)
+V.Local.sMsg.Declare(String)
+V.Local.bNo.Declare(Boolean,False)
+V.Local.sDGEFormat.Declare(String)
+V.local.iPartIII.Declare(Long)
+v.Local.bLocked.Declare(Boolean)
+V.Local.Ord.Declare(Long)
+V.Local.ii.Declare(Long)
+v.Local.sPage2.Declare(String)
+
+'Formatting datepicker value to use in SQL statement
+F.Intrinsic.String.Format(V.Screen.SS_Form1!dtp1_year.Value,"yyyy",V.Local.sYr)
+F.Intrinsic.String.Build("Select a.Rec_ID, Filing_Year, Member_Name, Ein, Address, City, State, Country_Zip, Contact_Name, Telephone, DGE_Name_Name, DGE_Ein, Dge_Address, Dge_City, Dge_State, Dge_Country_Zip, Dge_Contact_Name, Dge_Telephone, Auth_Transmitter, b.Group_Member, b.Qual_Offer, b.Qual_Offer_Trans, b.Sec_4980H_Trans, b.Offer_Method FROM Payroll_1094C1 as a Left Join Payroll_1094C2 as b On a.Rec_Id = b.Rec_Id Where Filing_Year = '{0}'",V.Local.sYr,V.Local.sSQL)
+Function.Data.DataTable.CreateFromSQL("dt1094C","conx",V.Local.sSql,True)
+Function.Intrinsic.Control.CallSub(update_default)
+
+F.Intrinsic.Control.If(V.DataTable.dt1094C.Exists,=,False,"OR",V.DataTable.dt1094C.RowCount--,<,0)
+	F.Data.DataTable.Close("dt1094C")
+	F.Intrinsic.Control.CallSub(Getdefaultdata)
+F.Intrinsic.Control.EndIf
+
+'F.Intrinsic.Control.For(V.Local.ii,0,V.DataTable.dt1094C.RowCount--,1)
+'	F.Intrinsic.Control.If(V.DataTable.dt1094C(V.Local.ii).Dge_Ein!FieldVal,=,"-1")
+'		F.Data.DataTable.SetValue("dt1094C",V.Local.ii,"DGE_Ein","")
+'	F.Intrinsic.Control.EndIf
+'F.Intrinsic.Control.Next(V.Local.ii)
+
+F.Data.DataTable.AddExpressionColumn("dt1094C","Col_DGE_Ein","String","IIF([DGE_Ein] = '-1','',[DGE_Ein])")
+
+'If records found, create file.  Otherwise, print blank. Left off here 9/15/15 4:43
+
+	'Pulling in ALE Member Information from PAYROLL_1094C3, Needed for page
+'	V.Local.sSQL.Set("Select REC_ID, ALL_MEC, ALL_FTE_COUNT,ALL_COUNT,ALL_GROUP, ALL_TRANS_RELIEF, JAN_MEC, JAN_FTE_COUNT, JAN_COUNT, JAN_GROUP, JAN_TRANS_RELIEF, FEB_MEC, FEB_FTE_COUNT, FEB_COUNT, FEB_GROUP, FEB_TRANS_RELIEF, MAR_MEC, MAR_FTE_COUNT, MAR_COUNT, MAR_GROUP, MAR_TRANS_RELIEF, APR_MEC, APR_FTE_COUNT, APR_COUNT, APR_GROUP, APR_TRANS_RELIEF, MAY_MEC, MAY_FTE_COUNT, MAY_COUNT, MAY_GROUP, MAY_TRANS_RELIEF, JUNE_MEC, JUNE_FTE_COUNT, JUNE_COUNT, JUNE_GROUP, JUNE_TRANS_RELIEF, JULY_MEC, JULY_FTE_COUNT, JULY_COUNT, JULY_GROUP, JULY_TRANS_RELIEF, AUG_MEC, AUG_FTE_COUNT, AUG_COUNT, AUG_GROUP, AUG_TRANS_RELIEF, SEPT_MEC, SEPT_FTE_COUNT, SEPT_COUNT, SEPT_GROUP, SEPT_TRANS_RELIEF, OCT_MEC, OCT_FTE_COUNT, OCT_COUNT, OCT_GROUP, OCT_TRANS_RELIEF, NOV_MEC, NOV_FTE_COUNT,NOV_COUNT, NOV_GROUP, NOV_TRANS_RELIEF, DEC_MEC, DEC_FTE_COUNT, DEC_COUNT, DEC_GROUP, DEC_TRANS_RELIEF from PAYROLL_1094C3")
+	v.Local.sSQL.Set("Select REC_ID, Cast(ALL_MEC As Integer) All_Mec, ALL_FTE_COUNT,ALL_COUNT,ALL_GROUP, ALL_TRANS_RELIEF, Cast(JAN_MEC As Integer) Jan_Mec, JAN_FTE_COUNT, JAN_COUNT, JAN_GROUP, JAN_TRANS_RELIEF, Cast(FEB_MEC As Integer) Feb_Mec, FEB_FTE_COUNT, FEB_COUNT, FEB_GROUP, FEB_TRANS_RELIEF, Cast(MAR_MEC As Integer) Mar_Mec, MAR_FTE_COUNT, MAR_COUNT, MAR_GROUP, MAR_TRANS_RELIEF, Cast(APR_MEC As Integer) APR_MEC, APR_FTE_COUNT, APR_COUNT, APR_GROUP, APR_TRANS_RELIEF, Cast(MAY_MEC As Integer) May_Mec, MAY_FTE_COUNT, MAY_COUNT, MAY_GROUP, MAY_TRANS_RELIEF, Cast(JUNE_MEC As Integer) June_Mec, JUNE_FTE_COUNT, JUNE_COUNT, JUNE_GROUP, JUNE_TRANS_RELIEF, Cast(JULY_MEC As Integer) As July_Mec, JULY_FTE_COUNT, JULY_COUNT, JULY_GROUP, JULY_TRANS_RELIEF, Cast(AUG_MEC As Integer) Aug_Mec, AUG_FTE_COUNT, AUG_COUNT, AUG_GROUP, AUG_TRANS_RELIEF, Cast(SEPT_MEC As Integer) Sept_Mec, SEPT_FTE_COUNT, SEPT_COUNT, SEPT_GROUP, SEPT_TRANS_RELIEF, Cast(OCT_MEC As Integer) Oct_Mec, OCT_FTE_COUNT, OCT_COUNT, OCT_GROUP, OCT_TRANS_RELIEF, Cast(NOV_MEC As Integer) Nov_Mec, NOV_FTE_COUNT,NOV_COUNT, NOV_GROUP, NOV_TRANS_RELIEF, Cast(DEC_MEC As Integer) Dec_mec, DEC_FTE_COUNT, DEC_COUNT, DEC_GROUP, DEC_TRANS_RELIEF from PAYROLL_1094C3")
+	Function.Data.DataTable.CreateFromSQL("dt1094C3","conx",V.Local.sSql,True)
+	
+	'Pulling  Other Members of Aggregated ALE Group records (needed for Page 3 of the PDF)from Payroll_1094C4
+	V.Local.sSQL.Set("Select Rec_ID, Member_Name1, Member_Ein1, Member_Name2, Member_Ein2, Member_Name3, Member_Ein3, Member_Name4, Member_Ein4, Member_Name5, Member_Ein5, Member_Name6, Member_Ein6, Member_Name7, Member_Ein7, Member_Name8, Member_Ein8, Member_Name9,")
+	F.Intrinsic.String.Build("{0} Member_Ein9, Member_Name10, Member_Ein10, Member_Name11, Member_Ein11, Member_Name12, Member_Ein12, Member_Name13, Member_Ein13, Member_Name14, Member_Ein14, Member_Name15, Member_Ein15, Member_Name16, Member_Ein16, Member_Name17, Member_Ein17, Member_Name18,",V.Local.sSQL,V.Local.sSQL)
+	F.Intrinsic.String.Build("{0} Member_Ein18, Member_Name19, Member_Ein19, Member_Name20, Member_Ein20, Member_Name21, Member_Ein21, Member_Name22, Member_Ein22, Member_Name23, Member_Ein23, Member_Name24, Member_Ein24, Member_Name25, Member_Ein25, Member_Name26,",V.Local.sSQL,V.Local.sSQL)
+	F.Intrinsic.String.Build("{0} Member_Ein26, Member_Name27, Member_Ein27, Member_Name28, Member_Ein28, Member_Name29, Member_Ein29, Member_Name30, Member_Ein30 From PAYROLL_1094C4",V.Local.sSQL,V.Local.sSQL)
+	Function.Data.DataTable.CreateFromSQL("dt1094C4","conx",V.Local.sSql,True)
+
+	'Creating PDF Path
+	F.Intrinsic.String.Build("{0}\Busint\PY_{1}_f1094c.pdf",V.Caller.GlobalDir,V.Local.sYr,V.Local.sPDFDir)
+
+	F.Intrinsic.File.Exists(V.Local.sPDFDir,V.Local.bRet)
+	F.Intrinsic.Control.If(V.Local.bRet,=,True)
+	'If file already exists in selected path, delete it and create the new one
+	F.Intrinsic.File.Exists(V.Global.sFileDirRet,V.Local.bRet)
+	F.Intrinsic.Control.If(V.Local.bRet,=,True)
+		F.Intrinsic.File.DeleteFile(V.Global.sFileDirRet)
+	F.Intrinsic.Control.EndIf
+
+	' 1094c field references from PDF
+	F.Automation.PDF.Open("F1094C",V.Local.sPDFDir)
+	F.Automation.PDF.GetFieldNames("F1094C",V.Local.sFields)
+	F.Automation.PDF.Close("F1094C")
+			
+	'Looping through UDT and setting the values in a string to be used for the PDF.
+	F.Intrinsic.Control.For(V.Local.iC,0,V.DataTabe.dt1094C.RowCount--,1)
+		F.Automation.PDF.Open("F1094C",V.Local.sPDFDir)
+		'**Part I, Page 1***
+		'1.Name of ALE member, 2.EIN, 3.Address, 4.City, 5.State, 6.Country Zip, 7.Contact name, 8.Telephone
+		'Replacing "0" with blank.
+'		F.Intrinsic.String.Replace(V.uGlobal.u1094C(V.Local.iC)!DGE_Ein,"0","",V.uGlobal.u1094C(V.Local.iC)!DGE_Ein)
+'		F.Intrinsic.String.Replace(V.uGlobal.u1094C(V.Local.iC)!Dge_Country_Zip,"0","",V.uGlobal.u1094C(V.Local.iC)!Dge_Country_Zip)
+	Function.Intrinsic.Control.If(v.Local.sYr,=,"2019")
+		'trash I know, but time crunches.
+		F.Intrinsic.String.Build("*!*{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}",V.DataTable.dt1094C(V.Local.iC).Member_Name!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Ein!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Address!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).City!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).State!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Country_Zip!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Contact_Name!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Telephone!FieldValTrim,V.Local.sFieldVals)
+	Function.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}",V.DataTable.dt1094C(V.Local.iC).Member_Name!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Ein!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Address!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).City!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).State!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Country_Zip!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Contact_Name!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Telephone!FieldValTrim,V.Local.sFieldVals)
+	Function.Intrinsic.Control.EndIf
+		'9.DGE Name, 10.DGE EIN, 11.DGE Address,  12.DGE City, 13.DGE State,  14.DGE Country Zip, 15.DGE ontact Name, 17.DGE Telephone
+		F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}",V.Local.sFieldVals,V.DataTable.dt1094C(V.Local.iC).DGE_Name_Name!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Col_DGE_Ein!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Dge_Address!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Dge_City!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Dge_State!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Dge_Country_Zip!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Dge_Contact_Name!FieldValTrim,V.DataTable.dt1094C(V.Local.iC).Dge_Telephone!FieldValTrim,V.Local.sFieldVals)
+		'18.Total Number of Submitted 1095-C forms, 19.Authoritative	
+		'F.Intrinsic.String.Build("{0}*!*0*!*{1}*!*{2}",V.Local.sFieldVals,V.Global.iTot1095C,V.DataTable.dt1094C(V.Local.iC).Auth_Transmitter.Long,V.Local.sFieldVals)		
+		v.Local.sTemp.Declare(String)	
+		Function.Intrinsic.Control.If(V.DataTable.dt1094C(V.Local.iC).Auth_Transmitter!FieldVaL,=,True)
+			Function.Intrinsic.Control.If(v.Local.sYr,=,"2019")
+				v.Local.sTemp.Set("1") 	
+			Function.Intrinsic.Control.Else
+				v.Local.sTemp.Set("Yes") 	
+			Function.Intrinsic.Control.EndIf
+			
+		Function.Intrinsic.Control.EndIf
+		F.Intrinsic.String.Build("{0}*!**!*{1}*!*{2}",V.Local.sFieldVals,V.Global.iTot1095C,v.Local.sTemp,V.Local.sFieldVals)
+		'Part II, Page 1
+		'Value requires either a Yes or No
+		F.Intrinsic.Control.If(V.DataTable.dt1094C(V.Local.iC).Group_Member!FieldVal,=,True)
+			'concat the field vals with Yes, and a blank field if Question 21 on 1094c is Yes
+			Function.Intrinsic.Control.If(v.Local.sYr,=,"2019")
+				V.Local.sMember.Set("1*!*0")
+			Function.Intrinsic.Control.Else
+				V.Local.sMember.Set("Yes*!*")
+			Function.Intrinsic.Control.EndIf			
+		F.Intrinsic.Control.Else
+			Function.Intrinsic.Control.If(v.Local.sYr,=,"2019")
+				V.Local.sMember.Set("0*!*0")
+			Function.Intrinsic.Control.Else
+				V.Local.sMember.Set("No*!*No")
+			Function.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.Endif
+		v.Local.sOn.Declare(String)
+		'20.Total 1095-C filed, 21.Is Memeber
+		'22. A.Qualifying Offer Method B.Qualifying Offer Method Transition Relief, C.Section 4980H Transition Relief D.98% Offer Method
+		'Certs of Eligibility, these values will either take a "Yes"  or Blank 
+		
+		Function.Intrinsic.Control.If(v.Local.sYr,=,"2017","OR",v.Local.sYr,=,"2019")		
+			F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}",V.Global.iTot1095C,V.Local.sMember,V.DataTable.dt1094C(V.Local.iC).Qual_Offer!FieldVal,"","",V.DataTable.dt1094C(V.Local.iC).Offer_Method!FieldVal,V.Local.sCoE)
+		Function.Intrinsic.Control.Elseif(v.Local.sYR,=,"2016")
+			F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}",V.Global.iTot1095C,V.Local.sMember,V.DataTable.dt1094C(V.Local.iC).Qual_Offer!FieldVal,"",V.DataTable.dt1094C(V.Local.iC).Sec_4980H_Trans!FieldVal,V.DataTable.dt1094C(V.Local.iC).Offer_Method!FieldVal,V.Local.sCoE)
+		Function.Intrinsic.Control.Else
+			F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}",V.Global.iTot1095C,V.Local.sMember,V.DataTable.dt1094C(V.Local.iC).Qual_Offer!FieldVal,V.DataTable.dt1094C(V.Local.iC).Offer_Method!FieldVal,V.Local.sCoE)
+		Function.Intrinsic.Control.EndIf
+			
+		'Replacing all True vals with "Yes" and False with blank since that's what the PDF requires, not 2019
+		Function.Intrinsic.Control.If(v.Local.sYr,=,"2019")
+			F.Intrinsic.String.Replace(V.local.sCoE,"True","1",V.Local.sCoE)			
+			F.Intrinsic.String.Replace(V.Local.sCoE,"False","0",V.Local.sCoE)
+		Function.Intrinsic.Control.Else
+			F.Intrinsic.String.Replace(V.local.sCoE,"True","Yes",V.Local.sCoE)
+			F.Intrinsic.String.Replace(V.Local.sCoE,"False","",V.Local.sCoE)
+		Function.Intrinsic.Control.EndIf	
+		f.Intrinsic.String.Build("{0}*!*{1}*!*",V.Local.sFieldVals,V.local.sCoE,V.Local.sFieldVals)
+		'add todays date.no more date
+		Function.Intrinsic.Control.If(v.Local.sYr,<>,"2019")
+			F.Intrinsic.String.Build("{0}{1}*!*",v.Local.sFieldvals,"",v.Local.sFieldVals)
+		Function.Intrinsic.Control.EndIf
+		'Making a copy of dt1094C3
+		F.Data.DataTable.Clone("dt1094C3","dt1094C3Copy",True)
+		
+		F.Intrinsic.Control.If(V.DataTable.dt1094C3.RowCount--,<,0)
+			V.Local.bNoData.Set(True)		
+		F.Intrinsic.Control.Else
+			'If records found, loop through them selecting only records that match the rec ID.
+			F.Intrinsic.Control.For(V.Local.Ord,0,V.DataTable.dt1094C3.RowCount--,1)
+				F.Intrinsic.Control.If(V.DataTable.dt1094C3(V.Local.Ord).Rec_ID!FieldVal,=,V.DataTable.dt1094C(V.Local.iC).Rec_ID!FieldVal)
+					F.Data.DataTable.AddRow("dt1094C3Copy","Rec_ID",V.DataTable.dt1094C3(V.Local.Ord).Rec_ID!FieldVal,"All_Mec",V.DataTable.dt1094C3(V.Local.Ord).All_Mec!FieldVal,"ALL_FTE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).ALL_FTE_COUNT!FieldVal,"ALL_COUNT",V.DataTable.dt1094C3(V.Local.Ord).ALL_COUNT!FieldVal,"ALL_GROUP",V.DataTable.dt1094C3(V.Local.Ord).ALL_GROUP!FieldVal,"ALL_TRANS_RELIEF",V.DataTable.dt1094C3(V.Local.Ord).ALL_TRANS_RELIEF!FieldVal,"JAN_MEC",V.DataTable.dt1094C3(V.Local.Ord).JAN_MEC!FieldVal,"JAN_FTE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).JAN_FTE_COUNT!FieldVal,"JAN_COUNT",V.DataTable.dt1094C3(V.Local.Ord).JAN_COUNT!FieldVal,"JAN_GROUP",V.DataTable.dt1094C3(V.Local.Ord).JAN_GROUP!FieldVal,"JAN_TRANS_RELIEF",V.DataTable.dt1094C3(V.Local.Ord).JAN_TRANS_RELIEF!FieldVal,"FEB_MEC",V.DataTable.dt1094C3(V.Local.Ord).Feb_Mec!FieldVal,"FEB_FTE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Feb_Fte_Count!FieldVal,"FEB_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Feb_Count!FieldVal,"FEB_GROUP",V.DataTable.dt1094C3(V.Local.Ord).Feb_Group!FieldVal,"FEB_TRANS_RELIEF",V.DataTable.dt1094C3(V.Local.Ord).Feb_Trans_Relief!FieldVal,"MAR_MEC",V.DataTable.dt1094C3(V.Local.Ord).Mar_Mec!FieldVal,"MAR_FTE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Mar_Fte_Count!FieldVal,"MAR_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Mar_Count!FieldVal,"MAR_GROUP",V.DataTable.dt1094C3(V.Local.Ord).Mar_Group!FieldVal,"MAR_TRANS_RELIEF",V.DataTable.dt1094C3(V.Local.Ord).Mar_Trans_Relief!FieldVal,"APR_MEC",V.DataTable.dt1094C3(V.Local.Ord).Apr_Mec!FieldVal,"APR_FTE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Apr_Fte_Count!FieldVal,"APR_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Apr_Count!FieldVal,"APR_GROUP",V.DataTable.dt1094C3(V.Local.Ord).Apr_Group!FieldVal,"APR_TRANS_RELIEF",V.DataTable.dt1094C3(V.Local.Ord).Apr_Trans_Relief!FieldVal,"May_Mec",V.DataTable.dt1094C3(V.Local.Ord).May_Mec!FieldVal,"MAY_FTE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).May_Fte_Count!FieldVal,"MAY_COUNT",V.DataTable.dt1094C3(V.Local.Ord).May_Count!FieldVal,"MAY_GROUP",V.DataTable.dt1094C3(V.Local.Ord).May_Group!FieldVal,"MAY_TRANS_RELIEF",V.DataTable.dt1094C3(V.Local.Ord).May_Trans_Relief!FieldVal,"JUNE_MEC",V.DataTable.dt1094C3(V.Local.Ord).June_Mec!FieldVal,"JUNE_FTE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).June_Fte_Count!FieldVal,"JUNE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).June_Count!FieldVal,"JUNE_GROUP",V.DataTable.dt1094C3(V.Local.Ord).June_Group!FieldVal,"JUNE_TRANS_RELIEF",V.DataTable.dt1094C3(V.Local.Ord).June_Trans_Relief!FieldVal,"JULY_MEC",V.DataTable.dt1094C3(V.Local.Ord).July_Mec!FieldVal,"JULY_FTE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).July_Fte_Count!FieldVal,"JULY_COUNT",V.DataTable.dt1094C3(V.Local.Ord).July_Count!FieldVal,"JULY_GROUP",V.DataTable.dt1094C3(V.Local.Ord).July_Group!FieldVal,"JULY_TRANS_RELIEF",V.DataTable.dt1094C3(V.Local.Ord).July_Trans_Relief!FieldVal,"Aug_Mec",V.DataTable.dt1094C3(V.Local.Ord).Aug_Mec!FieldVal,"AUG_FTE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Aug_Fte_Count!FieldVal,"AUG_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Aug_Count!FieldVal,"AUG_GROUP",V.DataTable.dt1094C3(V.Local.Ord).Aug_Group!FieldVal,"AUG_TRANS_RELIEF",V.DataTable.dt1094C3(V.Local.Ord).Aug_Trans_Relief!FieldVal,"SEPT_MEC",V.DataTable.dt1094C3(V.Local.Ord).Sept_Mec!FieldVal,"SEPT_FTE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Sept_Fte_Count!FieldVal,"SEPT_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Sept_Count!FieldVal,"SEPT_GROUP",V.DataTable.dt1094C3(V.Local.Ord).Sept_Group!FieldVal,"SEPT_TRANS_RELIEF",V.DataTable.dt1094C3(V.Local.Ord).Sept_Trans_Relief!FieldVal,"OCT_MEC",V.DataTable.dt1094C3(V.Local.Ord).Oct_Mec!FieldVal,"OCT_FTE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Oct_Fte_Count!FieldVal,"OCT_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Oct_Count!FieldVal,"OCT_GROUP",V.DataTable.dt1094C3(V.Local.Ord).Oct_Group!FieldVal,"OCT_TRANS_RELIEF",V.DataTable.dt1094C3(V.Local.Ord).Oct_Trans_Relief!FieldVal,"NOV_MEC",V.DataTable.dt1094C3(V.Local.Ord).Nov_Mec!FieldVal,"NOV_FTE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Nov_Fte_Count!FieldVal,"NOV_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Nov_Count!FieldVal,"NOV_GROUP",V.DataTable.dt1094C3(V.Local.Ord).Nov_Group!FieldVal,"NOV_TRANS_RELIEF",V.DataTable.dt1094C3(V.Local.Ord).Nov_Trans_Relief!FieldVal,"DEC_MEC",V.DataTable.dt1094C3(V.Local.Ord).Dec_Mec!FieldVal,"DEC_FTE_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Dec_Fte_Count!FieldVal,"DEC_COUNT",V.DataTable.dt1094C3(V.Local.Ord).Dec_Count!FieldVal,"DEC_GROUP",V.DataTable.dt1094C3(V.Local.Ord).Dec_Group!FieldVal,"DEC_TRANS_RELIEF",V.DataTable.dt1094C3(V.Local.Ord).Dec_Trans_Relief!FieldVal)
+				F.Intrinsic.Control.EndIf
+			F.Intrinsic.Control.Next(V.Local.Ord)
+		F.Intrinsic.Control.EndIf
+		
+		
+		Function.Intrinsic.Control.If(v.DataTable.dt1094C3Copy.RowCount--,<,0) 
+			v.Local.bNoData.Set(True)
+		Function.Intrinsic.Control.EndIf
+
+		F.Intrinsic.Control.If(V.DataTable.dt1094C3Copy.RowCount--,>=,0)
+		Function.Intrinsic.Control.If(v.Local.sYr,=,2018)
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_All_Mec","String","IIF([All_Mec] = 1,True,'')")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Jan_Mec","String","IIF([Jan_Mec] = 1,True,'')")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Feb_Mec","String","IIF([Feb_Mec] = 1,True,'')")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Mar_Mec","String","IIF([Mar_Mec] = 1,True,'')")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Apr_Mec","String","IIF([Apr_Mec] = 1,True,'')")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_May_Mec","String","IIF([May_Mec] = 1,True,'')")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_June_Mec","String","IIF([June_Mec] = 1,True,'')")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_July_Mec","String","IIF([July_Mec] = 1,True,'')")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Aug_Mec","String","IIF([Aug_Mec] = 1,True,'')")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Sept_Mec","String","IIF([Sept_Mec] = 1,True,'')")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Oct_Mec","String","IIF([Oct_Mec] = 1,True,'')")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Nov_Mec","String","IIF([Nov_Mec] = 1,True,'')")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Dec_Mec","String","IIF([Dec_Mec] = 1,True,'')")
+	
+			'set values with -1 to blank 
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_All_Fte_Count","String","IIF([All_Fte_Count] = -1,'',[All_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_All_Count","String","IIF([All_Count] = -1,'',[All_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Jan_Count","String","IIF([Jan_Count] = -1,'',[Jan_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Feb_Count","String","IIF([Feb_Count] = -1,'',[Feb_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Mar_Count","String","IIF([Mar_Count] = -1,'',[Mar_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Apr_Count","String","IIF([Apr_Count] = -1,'',[Apr_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_May_Count","String","IIF([May_Count] = -1,'',[May_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_June_Count","String","IIF([June_Count] = -1,'',[June_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_July_Count","String","IIF([July_Count] = -1,'',[July_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Aug_Count","String","IIF([Aug_Count] = -1,'',[Aug_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Sept_Count","String","IIF([Sept_Count] = -1,'',[Sept_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Oct_Count","String","IIF([Oct_Count] = -1,'',[Oct_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Nov_Count","String","IIF([Nov_Count] = -1,'',[Nov_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Dec_Count","String","IIF([Dec_Count] = -1,'',[Dec_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Jan_Fte_Count","String","IIF([Jan_Fte_Count] = -1,'',[Jan_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Feb_Fte_Count","String","IIF([Feb_Fte_Count] = -1,'',[Feb_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Mar_Fte_Count","String","IIF([Mar_Fte_Count] = -1,'',[Mar_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Apr_Fte_Count","String","IIF([Apr_Fte_Count] = -1,'',[Apr_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_May_Fte_Count","String","IIF([May_Fte_Count] = -1,'',[May_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_June_Fte_Count","String","IIF([June_Fte_Count] = -1,'',[June_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_July_Fte_Count","String","IIF([July_Fte_Count] = -1,'',[July_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Aug_Fte_Count","String","IIF([Aug_Fte_Count] = -1,'',[Aug_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Sept_Fte_Count","String","IIF([Sept_Fte_Count] = -1,'',[Sept_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Oct_Fte_Count","String","IIF([Oct_Fte_Count] = -1,'',[Oct_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Nov_Fte_Count","String","IIF([Nov_Fte_Count] = -1,'',[Nov_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Dec_Fte_Count","String","IIF([Dec_Fte_Count] = -1,'',[Dec_Fte_Count])")
+		Function.Intrinsic.Control.Else
+		'Setting values with "1" to True
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_All_Mec","String","IIF([All_Mec] = 1,True,False)")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Jan_Mec","String","IIF([Jan_Mec] = 1,True,False)")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Feb_Mec","String","IIF([Feb_Mec] = 1,True,False)")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Mar_Mec","String","IIF([Mar_Mec] = 1,True,False)")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Apr_Mec","String","IIF([Apr_Mec] = 1,True,False)")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_May_Mec","String","IIF([May_Mec] = 1,True,False)")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_June_Mec","String","IIF([June_Mec] = 1,True,False)")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_July_Mec","String","IIF([July_Mec] = 1,True,False)")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Aug_Mec","String","IIF([Aug_Mec] = 1,True,False)")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Sept_Mec","String","IIF([Sept_Mec] = 1,True,False)")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Oct_Mec","String","IIF([Oct_Mec] = 1,True,False)")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Nov_Mec","String","IIF([Nov_Mec] = 1,True,False)")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Dec_Mec","String","IIF([Dec_Mec] = 1,True,False)")
+	
+			'set values with -1 to blank 
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_All_Fte_Count","String","IIF([All_Fte_Count] = -1,'',[All_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_All_Count","String","IIF([All_Count] = -1,'',[All_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Jan_Count","String","IIF([Jan_Count] = -1,'',[Jan_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Feb_Count","String","IIF([Feb_Count] = -1,'',[Feb_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Mar_Count","String","IIF([Mar_Count] = -1,'',[Mar_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Apr_Count","String","IIF([Apr_Count] = -1,'',[Apr_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_May_Count","String","IIF([May_Count] = -1,'',[May_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_June_Count","String","IIF([June_Count] = -1,'',[June_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_July_Count","String","IIF([July_Count] = -1,'',[July_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Aug_Count","String","IIF([Aug_Count] = -1,'',[Aug_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Sept_Count","String","IIF([Sept_Count] = -1,'',[Sept_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Oct_Count","String","IIF([Oct_Count] = -1,'',[Oct_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Nov_Count","String","IIF([Nov_Count] = -1,'',[Nov_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Dec_Count","String","IIF([Dec_Count] = -1,'',[Dec_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Jan_Fte_Count","String","IIF([Jan_Fte_Count] = -1,'',[Jan_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Feb_Fte_Count","String","IIF([Feb_Fte_Count] = -1,'',[Feb_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Mar_Fte_Count","String","IIF([Mar_Fte_Count] = -1,'',[Mar_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Apr_Fte_Count","String","IIF([Apr_Fte_Count] = -1,'',[Apr_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_May_Fte_Count","String","IIF([May_Fte_Count] = -1,'',[May_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_June_Fte_Count","String","IIF([June_Fte_Count] = -1,'',[June_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_July_Fte_Count","String","IIF([July_Fte_Count] = -1,'',[July_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Aug_Fte_Count","String","IIF([Aug_Fte_Count] = -1,'',[Aug_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Sept_Fte_Count","String","IIF([Sept_Fte_Count] = -1,'',[Sept_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Oct_Fte_Count","String","IIF([Oct_Fte_Count] = -1,'',[Oct_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Nov_Fte_Count","String","IIF([Nov_Fte_Count] = -1,'',[Nov_Fte_Count])")
+			F.Data.DataTable.AddExpressionColumn("dt1094C3Copy","Col_Dec_Fte_Count","String","IIF([Dec_Fte_Count] = -1,'',[Dec_Fte_Count])")
+		
+		Function.Intrinsic.Control.EndIf
+			
+			
+			Function.Intrinsic.Control.If(v.Local.sYr,=,"2017")
+				F.Intrinsic.String.Build("{0}*!**!*{1}*!*{2}*!*%ALLMONTHS%*!*{3}",V.DataTable.dt1094C3Copy(0).Col_ALL_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_ALL_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_ALL_COUNT!FieldVal,"",V.Local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!**!*{2}*!*{3}*!*%JAN%*!*{4}*!*{5}*!**!*{6}*!*{7}*!*%FEB%*!*{8}",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).Col_JAN_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JAN_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JAN_COUNT!FieldVal,"",V.DataTable.dt1094C3Copy(0).Col_FEB_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_FEB_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_FEB_COUNT!FieldVal,"",V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!**!*{2}*!*{3}*!*%MAR%*!*{4}*!*{5}*!**!*{6}*!*{7}*!*%APR%",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).Col_MAR_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAR_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAR_COUNT!FieldVal,"",V.DataTable.dt1094C3Copy(0).Col_APR_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_APR_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_APR_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!**!*{3}*!*{4}*!*%MAY%*!*{5}*!*{6}*!**!*{7}*!*{8}*!*%JUNE%",V.Local.sPartIII,"",V.DataTable.dt1094C3Copy(0).Col_MAY_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAY_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAY_COUNT!FieldVal,"",V.DataTable.dt1094C3Copy(0).Col_JUNE_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JUNE_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JUNE_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!**!*{3}*!*{4}*!*%JULY%*!*{5}*!*{6}*!**!*{7}*!*{8}*!*%AUG%",V.Local.sPartIII,"",V.DataTable.dt1094C3Copy(0).Col_JULY_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JULY_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JULY_COUNT!FieldVal,"",V.DataTable.dt1094C3Copy(0).Col_AUG_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_AUG_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_AUG_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!**!*{3}*!*{4}*!*%SEPT%*!*{5}*!*{6}*!**!*{7}*!*{8}*!*%OCT%",V.Local.sPartIII,"",V.DataTable.dt1094C3Copy(0).Col_SEPT_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_SEPT_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_SEPT_COUNT!FieldVal,"",V.DataTable.dt1094C3Copy(0).Col_OCT_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_OCT_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_OCT_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!**!*{3}*!*{4}*!*%NOV%*!*{5}*!*{6}*!**!*{7}*!*{8}*!*%DEC%*!*{9}",V.Local.sPartIII,"",V.DataTable.dt1094C3Copy(0).Col_NOV_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_NOV_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_NOV_COUNT!FieldVal,"",V.DataTable.dt1094C3Copy(0).Col_DEC_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_DEC_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_DEC_COUNT!FieldVal,"",V.local.sPartIII)
+			Function.Intrinsic.Control.ElseIf(v.Local.sYr,=,"2018")						
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*%ALLMONTHS%*!*{3}",V.DataTable.dt1094C3Copy(0).Col_ALL_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_ALL_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_ALL_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).ALL_TRANS_RELIEF!FieldVal,V.Local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*%JAN%*!*{4}*!*{5}*!*{6}*!*{7}*!*%FEB%*!*{8}",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).Col_JAN_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JAN_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JAN_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).JAN_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_FEB_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_FEB_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_FEB_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).FEB_TRANS_RELIEF!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*%MAR%*!*{4}*!*{5}*!*{6}*!*{7}*!*%APR%",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).Col_MAR_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAR_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAR_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).MAR_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_APR_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_APR_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_APR_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*%MAY%*!*{5}*!*{6}*!*{7}*!*{8}*!*%JUNE%",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).APR_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAY_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAY_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAY_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).MAY_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JUNE_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JUNE_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JUNE_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*%JULY%*!*{5}*!*{6}*!*{7}*!*{8}*!*%AUG%",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).JUNE_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JULY_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JULY_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JULY_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).JULY_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_AUG_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_AUG_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_AUG_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*%SEPT%*!*{5}*!*{6}*!*{7}*!*{8}*!*%OCT%",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).AUG_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_SEPT_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_SEPT_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_SEPT_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).SEPT_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_OCT_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_OCT_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_OCT_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*%NOV%*!*{5}*!*{6}*!*{7}*!*{8}*!*%DEC%*!*{9}",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).OCT_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_NOV_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_NOV_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_NOV_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).NOV_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_DEC_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_DEC_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_DEC_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).DEC_TRANS_RELIEF!FieldVal,V.local.sPartIII)
+			Function.Intrinsic.Control.ElseIf(v.Local.sYr,=,"2019")					
+				F.Intrinsic.String.Build("{0}*!**!*{1}*!*{2}*!*%ALLMONTHS%*!*{3}",V.DataTable.dt1094C3Copy(0).Col_ALL_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_ALL_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_ALL_COUNT!FieldVal,"",V.Local.sPartIII)				
+				F.Intrinsic.String.Build("{0}*!*{1}*!**!*{2}*!*{3}*!*%JAN%*!*{4}*!*{5}*!**!*{6}*!*{7}*!*%FEB%*!*{8}",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).Col_JAN_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JAN_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JAN_COUNT!FieldVal,"",V.DataTable.dt1094C3Copy(0).Col_FEB_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_FEB_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_FEB_COUNT!FieldVal,"",V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!**!*{2}*!*{3}*!*%MAR%*!*{4}*!*{5}*!**!*{6}*!*{7}*!*%APR%",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).Col_MAR_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAR_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAR_COUNT!FieldVal,"",V.DataTable.dt1094C3Copy(0).Col_APR_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_APR_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_APR_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!**!*{3}*!*{4}*!*%MAY%*!*{5}*!*{6}*!**!*{7}*!*{8}*!*%JUNE%",V.Local.sPartIII,"",V.DataTable.dt1094C3Copy(0).Col_MAY_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAY_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAY_COUNT!FieldVal,"",V.DataTable.dt1094C3Copy(0).Col_JUNE_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JUNE_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JUNE_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!**!*{3}*!*{4}*!*%JULY%*!*{5}*!*{6}*!**!*{7}*!*{8}*!*%AUG%",V.Local.sPartIII,"",V.DataTable.dt1094C3Copy(0).Col_JULY_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JULY_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JULY_COUNT!FieldVal,"",V.DataTable.dt1094C3Copy(0).Col_AUG_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_AUG_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_AUG_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!**!*{3}*!*{4}*!*%SEPT%*!*{5}*!*{6}*!**!*{7}*!*{8}*!*%OCT%",V.Local.sPartIII,"",V.DataTable.dt1094C3Copy(0).Col_SEPT_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_SEPT_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_SEPT_COUNT!FieldVal,"",V.DataTable.dt1094C3Copy(0).Col_OCT_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_OCT_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_OCT_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!**!*{3}*!*{4}*!*%NOV%*!*{5}*!*{6}*!**!*{7}*!*{8}*!*%DEC%*!*{9}",V.Local.sPartIII,"",V.DataTable.dt1094C3Copy(0).Col_NOV_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_NOV_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_NOV_COUNT!FieldVal,"",V.DataTable.dt1094C3Copy(0).Col_DEC_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_DEC_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_DEC_COUNT!FieldVal,"",V.local.sPartIII)
+			Function.Intrinsic.Control.Else
+				F.Intrinsic.String.Build("{0}*!**!*{1}*!*{2}*!*%ALLMONTHS%*!*{3}",V.DataTable.dt1094C3Copy(0).Col_ALL_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_ALL_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_ALL_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).ALL_TRANS_RELIEF!FieldVal,V.Local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!**!*{2}*!*{3}*!*%JAN%*!*{4}*!*{5}*!**!*{6}*!*{7}*!*%FEB%*!*{8}",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).Col_JAN_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JAN_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JAN_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).JAN_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_FEB_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_FEB_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_FEB_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).FEB_TRANS_RELIEF!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!**!*{2}*!*{3}*!*%MAR%*!*{4}*!*{5}*!**!*{6}*!*{7}*!*%APR%",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).Col_MAR_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAR_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAR_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).MAR_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_APR_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_APR_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_APR_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!**!*{3}*!*{4}*!*%MAY%*!*{5}*!*{6}*!**!*{7}*!*{8}*!*%JUNE%",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).APR_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAY_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAY_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_MAY_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).MAY_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JUNE_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JUNE_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JUNE_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!**!*{3}*!*{4}*!*%JULY%*!*{5}*!*{6}*!**!*{7}*!*{8}*!*%AUG%",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).JUNE_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JULY_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JULY_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_JULY_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).JULY_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_AUG_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_AUG_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_AUG_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!**!*{3}*!*{4}*!*%SEPT%*!*{5}*!*{6}*!**!*{7}*!*{8}*!*%OCT%",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).AUG_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_SEPT_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_SEPT_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_SEPT_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).SEPT_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_OCT_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_OCT_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_OCT_COUNT!FieldVal,V.local.sPartIII)
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!**!*{3}*!*{4}*!*%NOV%*!*{5}*!*{6}*!**!*{7}*!*{8}*!*%DEC%*!*{9}",V.Local.sPartIII,V.DataTable.dt1094C3Copy(0).OCT_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_NOV_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_NOV_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_NOV_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).NOV_TRANS_RELIEF!FieldVal,V.DataTable.dt1094C3Copy(0).Col_DEC_MEC!FieldVal,V.DataTable.dt1094C3Copy(0).Col_DEC_FTE_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).Col_DEC_COUNT!FieldVal,V.DataTable.dt1094C3Copy(0).DEC_TRANS_RELIEF!FieldVal,V.local.sPartIII)
+			Function.Intrinsic.Control.EndIf
+			
+			
+			
+			
+			'Converting True to Yes, these are the required values for Minimum Essential Coverage field
+			Function.Intrinsic.Control.If(v.Local.sYr,<>,"2019")
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"True","Yes",V.Local.sPartIII)
+			Function.Intrinsic.Control.Else
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"True","1",V.Local.sPartIII)
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"Yes","1",V.Local.sPartIII)
+			Function.Intrinsic.Control.EndIf
+			'If Minimum Essential Coverage values have No's, then a "No" will be required to be set within the No parameter of the string.Otherwise if Yes, then NOTHING must be set within the NO parameters.
+	
+			F.Intrinsic.Control.If(V.Local.bNoData,=,True)
+				'Set udt vals to "-1" so it'll print blank since we have nothing.
+				F.Data.DataTable.SetValue("dt1094C3Copy",0,"All_Mec","-1","Jan_Mec","-1","Feb_Mec","-1","Mar_Mec","-1","Apr_Mec","-1","May_Mec","-1","June_Mec","-1","July_Mec","-1","Aug_Mec","-1","Sept_Mec","-1","Oct_Mec","-1","Nov_Mec","-1","Dec_Mec","-1")
+			F.Intrinsic.Control.Endif			
+			
+			Function.Intrinsic.Control.If(v.Local.sYr,=,"2019")			
+			'2/17/16 New table change logic will go here	
+				F.Intrinsic.String.Split(V.Local.sPartIII,"*!*",V.Local.sPartIII)
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).ALL_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(1).Set("2")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(1).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				'January month
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).JAN_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(7).Set("2")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(7).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				'February month
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).FEB_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(13).Set("2")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(13).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				'March month
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).MAR_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(19).Set("2")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(19).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).APR_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(25).Set("2")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(25).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).MAY_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(31).Set("2")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(31).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).JUNE_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(37).Set("2")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(37).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).JULY_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(43).Set("2")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(43).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).AUG_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(49).Set("2")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(49).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).SEPT_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(55).Set("2")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(55).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).OCT_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(61).Set("2")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(61).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).NOV_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(67).Set("2")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(67).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).DEC_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(73).Set("2")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(73).Set("")
+				F.Intrinsic.Control.EndSelect
+				Function.Intrinsic.Control.ElseIf(v.Local.sYr,<>,"2018")
+								F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).ALL_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(1).Set("No")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(1).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				'January month
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).JAN_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(7).Set("No")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(7).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				'February month
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).FEB_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(13).Set("No")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(13).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				'March month
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).MAR_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(19).Set("No")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(19).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).APR_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(25).Set("No")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(25).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).MAY_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(31).Set("No")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(31).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).JUNE_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(37).Set("No")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(37).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).JULY_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(43).Set("No")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(43).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).AUG_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(49).Set("No")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(49).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).SEPT_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(55).Set("No")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(55).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).OCT_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(61).Set("No")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(61).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).NOV_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(67).Set("No")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(67).Set("")
+				F.Intrinsic.Control.EndSelect
+	
+				F.Intrinsic.Control.SelectCase(V.DataTable.dt1094C3Copy(0).DEC_MEC!FieldVal)
+					F.Intrinsic.Control.Case("0")
+						V.Local.sPartIII(73).Set("No")
+					F.Intrinsic.Control.Case("-1")
+						V.Local.sPartIII(73).Set("")
+				F.Intrinsic.Control.EndSelect				
+			Function.Intrinsic.Control.EndIf
+			
+						
+			'Joining array back together for further string building.
+			F.Intrinsic.String.Join(V.Local.sPartIII,"*!*",V.Local.sPartIII)			
+				'Replacing wildecards (like %JAN%, %FEB% etc.) within V.Local.sPartIII string so they wouldn't get converted to Yes
+				'these need to be 0's or 1's for Aggregated Group Indicator field.				
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"%ALLMONTHS%",V.DataTable.dt1094C3Copy(0).ALL_GROUP!FieldValLong,V.Local.sPartIII)
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"%JAN%",V.DataTable.dt1094C3Copy(0).JAN_GROUP!FieldValLong,V.Local.sPartIII)
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"%FEB%",V.DataTable.dt1094C3Copy(0).FEB_GROUP!FieldValLong,V.Local.sPartIII)
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"%MAR%",V.DataTable.dt1094C3Copy(0).MAR_GROUP!FieldValLong,V.Local.sPartIII)
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"%APR%",V.DataTable.dt1094C3Copy(0).APR_GROUP!FieldValLong,V.Local.sPartIII)
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"%MAY%",V.DataTable.dt1094C3Copy(0).MAY_GROUP!FieldValLong,V.Local.sPartIII)
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"%JUNE%",V.DataTable.dt1094C3Copy(0).JUNE_GROUP!FieldValLong,V.Local.sPartIII)
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"%JULY%",V.DataTable.dt1094C3Copy(0).JULY_GROUP!FieldValLong,V.Local.sPartIII)
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"%AUG%",V.DataTable.dt1094C3Copy(0).AUG_GROUP!FieldValLong,V.Local.sPartIII)
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"%SEPT%",V.DataTable.dt1094C3Copy(0).SEPT_GROUP!FieldValLong,V.Local.sPartIII)
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"%OCT%",V.DataTable.dt1094C3Copy(0).OCT_GROUP!FieldValLong,V.Local.sPartIII)
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"%NOV%",V.DataTable.dt1094C3Copy(0).NOV_GROUP!FieldValLong,V.Local.sPartIII)
+				F.Intrinsic.String.Replace(V.Local.sPartIII,"%DEC%",V.DataTable.dt1094C3Copy(0).DEC_GROUP!FieldValLong,V.Local.sPartIII)
+			Function.Intrinsic.Control.If(v.Local.sYr,=,"2018")
+				'replace any 0 with blanks, and any ones with 
+				F.Intrinsic.String.Replace(v.Local.sPartIII,"*!*0*!*","*!**!*",v.Local.sPartIII)
+				F.Intrinsic.String.Replace(v.Local.sPartIII,"*!*-1*!*","*!*Yes*!*",v.Local.sPartIII)				
+				f.Intrinsic.String.Replace(v.Local.sPartIII,"*!*1*!*","*!*Yes*!*",v.Local.sPartIII)
+			Function.Intrinsic.Control.ElseIf(v.Local.sYr,=,"2019")
+				'replace any 0 with blanks, and any ones with 
+				F.Intrinsic.String.Replace(v.Local.sPartIII,"*!*0*!*","*!**!*",v.Local.sPartIII)
+				'fieldvallong reads as -1 now?????
+				F.Intrinsic.String.Replace(v.Local.sPartIII,"*!*-1*!*","*!*1*!*",v.Local.sPartIII)				
+'				f.Intrinsic.String.Replace(v.Local.sPartIII,"*!*1*!*","*!*Yes*!*",v.Local.sPartIII)
+			Function.Intrinsic.Control.EndIf
+			
+		F.Intrinsic.Control.EndIf
+		
+		'check part 3 and make sure it's atleast 64 ubounds
+		f.Intrinsic.String.Split(v.Local.sPartIII,"*!*",v.Local.sPartIII)
+		Function.Intrinsic.Control.If(v.Local.sYr,=,"2019")
+			v.Local.sPartIII.RedimPreserve(0,77)
+		Function.Intrinsic.Control.Else
+			Function.Intrinsic.Control.If(v.Local.sPartIII.UBound,<,64) 
+				v.Local.sPartIII.RedimPreserve(0,64)
+			Function.Intrinsic.Control.EndIf
+		Function.Intrinsic.Control.EndIf
+		f.Intrinsic.String.Join(v.Local.sPartIII,"*!*",v.Local.sPartIII)
+				
+		'String together sPartII with the rest of the PDF's values.
+		F.Intrinsic.String.Build("{0}*!*{1}*!*",V.Local.sFieldVals,V.Local.sPartIII,V.Local.sFieldVals)
+		
+		'Making a copy of dt1094C4
+		F.Intrinsic.Control.If(V.DataTable.dt1094C4.RowCount--,>=,0)
+			V.Local.Ord.Set(0)
+			F.Data.DataTable.Clone("dt1094C4","dt1094C4Copy",True)
+			
+			F.Intrinsic.Control.For(V.Local.Ord,0,V.DataTable.dt1094C4.RowCount--,1)
+				F.Intrinsic.Control.If(V.DataTable.dt1094C4(V.Local.Ord).Rec_ID!FieldVal,=,V.DataTable.dt1094C(V.Local.iC).Rec_ID!FieldVal)
+					F.Data.DataTable.AddRow("dt1094C4Copy","Rec_Id",V.DataTable.dt1094C4(V.Local.Ord).Rec_ID!FieldVal,"Member_Name1",V.DataTable.dt1094C4(V.Local.Ord).Member_Name1!FieldVal,"Member_Ein1",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein1!FieldVal,"Member_Name2",V.DataTable.dt1094C4(V.Local.Ord).Member_Name2!FieldVal,"Member_Ein2",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein2!FieldVal,"Member_Name3",V.DataTable.dt1094C4(V.Local.Ord).Member_Name3!FieldVal,"Member_Ein3",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein3!FieldVal,"Member_Name4",V.DataTable.dt1094C4(V.Local.Ord).Member_Name4!FieldVal,"Member_Ein4",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein4!FieldVal,"Member_Name5",V.DataTable.dt1094C4(V.Local.Ord).Member_Name5!FieldVal,"Member_Ein5",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein5!FieldVal,"Member_Name6",V.DataTable.dt1094C4(V.Local.Ord).Member_Name6!FieldVal,"Member_Ein6",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein6!FieldVal,"Member_Name7",V.DataTable.dt1094C4(V.Local.Ord).Member_Name7!FieldVal,"Member_Ein7",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein7!FieldVal,"Member_Name8",V.DataTable.dt1094C4(V.Local.Ord).Member_Name8!FieldVal,"Member_Ein8",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein8!FieldVal,"Member_Name9",V.DataTable.dt1094C4(V.Local.Ord).Member_Name9!FieldVal,"Member_Ein9",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein9!FieldVal,"Member_Name10",V.DataTable.dt1094C4(V.Local.Ord).Member_Name10!FieldVal,"Member_Ein10",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein10!FieldVal,"Member_Name11",V.DataTable.dt1094C4(V.Local.Ord).Member_Name11!FieldVal,"Member_Ein11",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein11!FieldVal,"Member_Name12",V.DataTable.dt1094C4(V.Local.Ord).Member_Name12!FieldVal,"Member_Ein12",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein12!FieldVal,"Member_Name13",V.DataTable.dt1094C4(V.Local.Ord).Member_Name13!FieldVal,"Member_Ein13",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein13!FieldVal,"Member_Name14",V.DataTable.dt1094C4(V.Local.Ord).Member_Name14!FieldVal,"Member_Ein14",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein14!FieldVal,"Member_Name15",V.DataTable.dt1094C4(V.Local.Ord).Member_Name15!FieldVal,"Member_Ein15",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein15!FieldVal,"Member_Name16",V.DataTable.dt1094C4(V.Local.Ord).Member_Name16!FieldVal,"Member_Ein16",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein16!FieldVal,"Member_Name17",V.DataTable.dt1094C4(V.Local.Ord).Member_Name17!FieldVal,"Member_Ein17",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein17!FieldVal,"Member_Name18",V.DataTable.dt1094C4(V.Local.Ord).Member_Name18!FieldVal,"Member_Ein18",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein18!FieldVal,"Member_Name19",V.DataTable.dt1094C4(V.Local.Ord).Member_Name19!FieldVal,"Member_Ein19",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein19!FieldVal,"Member_Name20",V.DataTable.dt1094C4(V.Local.Ord).Member_Name20!FieldVal,"Member_Ein20",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein20!FieldVal,"Member_Name21",V.DataTable.dt1094C4(V.Local.Ord).Member_Name21!FieldVal,"Member_Ein21",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein21!FieldVal,"Member_Name22",V.DataTable.dt1094C4(V.Local.Ord).Member_Name22!FieldVal,"Member_Ein22",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein22!FieldVal,"Member_Name23",V.DataTable.dt1094C4(V.Local.Ord).Member_Name23!FieldVal,"Member_Ein23",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein23!FieldVal,"Member_Name24",V.DataTable.dt1094C4(V.Local.Ord).Member_Name24!FieldVal,"Member_Ein24",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein24!FieldVal,"Member_Name25",V.DataTable.dt1094C4(V.Local.Ord).Member_Name25!FieldVal,"Member_Ein25",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein25!FieldVal,"Member_Name26",V.DataTable.dt1094C4(V.Local.Ord).Member_Name26!FieldVal,"Member_Ein26",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein26!FieldVal,"Member_Name27",V.DataTable.dt1094C4(V.Local.Ord).Member_Name27!FieldVal,"Member_Ein27",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein27!FieldVal,"Member_Name28",V.DataTable.dt1094C4(V.Local.Ord).Member_Name28!FieldVal,"Member_Ein28",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein28!FieldVal,"Member_Name29",V.DataTable.dt1094C4(V.Local.Ord).Member_Name29!FieldVal,"Member_Ein29",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein29!FieldVal,"Member_Name30",V.DataTable.dt1094C4(V.Local.Ord).Member_Name30!FieldVal,"Member_Ein30",V.DataTable.dt1094C4(V.Local.Ord).Member_Ein30!FieldVal)
+				F.Intrinsic.Control.EndIf
+			F.Intrinsic.Control.Next(V.Local.Ord)
+		F.Intrinsic.Control.EndIf	
+		F.Intrinsic.Control.If(V.DataTable.dt1094C4Copy.Exists,=,True)
+			F.Intrinsic.Control.If(V.DataTable.dt1094C4Copy.RowCount--,>=,0)
+			
+				'Members 1 thru 5
+				F.Intrinsic.String.Build("{0}{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}",V.Local.sFieldVals,V.DataTable.dt1094C4Copy(0).Member_Name1!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein1!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name2!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein2!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name3!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein3!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name4!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein4!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name5!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein5!FieldVal,V.Local.sFieldVals)
+				'Members 6 thru 10
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}",V.Local.sFieldVals,V.DataTable.dt1094C4Copy(0).Member_Name6!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein6!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name7!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein7!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name8!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein8!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name9!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein9!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name10!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein10!FieldVal,V.Local.sFieldVals)
+				'Members 11 thru 15
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}",V.Local.sFieldVals,V.DataTable.dt1094C4Copy(0).Member_Name11!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein11!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name12!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein12!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name13!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein13!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name14!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein14!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name15!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein15!FieldVal,V.Local.sFieldVals)
+				'Members 16 thru 20
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}",V.Local.sFieldVals,V.DataTable.dt1094C4Copy(0).Member_Name16!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein16!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name17!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein17!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name18!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein18!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name19!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein19!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name20!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein20!FieldVal,V.Local.sFieldVals)
+				'Members 21 thru 25
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}",V.Local.sFieldVals,V.DataTable.dt1094C4Copy(0).Member_Name21!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein21!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name22!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein22!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name23!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein23!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name24!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein24!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name25!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein25!FieldVal,V.Local.sFieldVals)
+				'Members 26 thru 30
+				F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!*{7}*!*{8}*!*{9}*!*{10}",V.Local.sFieldVals,V.DataTable.dt1094C4Copy(0).Member_Name26!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein26!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name27!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein27!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name28!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein28!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name29!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein29!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Name30!FieldVal,V.DataTable.dt1094C4Copy(0).Member_Ein30!FieldVal,V.Local.sFieldVals)
+			F.Intrinsic.Control.Else
+				'Members 1 thru 5
+				F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+				'Members 6 thru 10
+				F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+				'Members 11 thru 15
+				F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+				'Members 16 thru 20
+				F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+				'Members 21 thru 25
+				F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+				'Members 26 thru 30
+				F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.Else
+			'Members 1 thru 5
+			F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+			'Members 6 thru 10
+			F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+			'Members 11 thru 15
+			F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+			'Members 16 thru 20
+			F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+			'Members 21 thru 25
+			F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+			'Members 26 thru 30
+			F.Intrinsic.String.Build("{0}*!**!**!**!**!**!**!**!**!**!*",V.Local.sFieldVals,V.Local.sFieldVals)
+		F.Intrinsic.Control.EndIf
+		
+		F.Intrinsic.String.Replace(V.Local.sFieldVals,"True","1",V.Local.sFieldVals)
+		F.Intrinsic.String.Replace(V.Local.sFieldVals,"False","0",V.Local.sFieldVals)
+		
+		'Creating temporary individual files so that we can merge them later.
+		F.Intrinsic.Control.If(V.Local.iC,=,-1)
+			F.Intrinsic.String.Build("{0}\1094c_Temp{1}.pdf",V.Caller.LocalGSSTempDir,V.Local.iRec,V.Global.s1094TempFiles)
+		F.Intrinsic.Control.Elseif(V.Local.iC,=,0)
+			F.Intrinsic.String.Build("{0}\1094c_Temp{1}.pdf",V.Caller.LocalGSSTempDir,V.Local.iRec,V.Global.s1094TempFiles)
+		F.Intrinsic.Control.Elseif(V.Local.iC,>,0)
+			F.Intrinsic.String.Build("{0}*!*{1}\1094c_Temp{2}.pdf",V.Global.s1094TempFiles,V.Caller.LocalGSSTempDir,V.Local.iRec,V.Global.s1094TempFiles)
+		F.Intrinsic.Control.EndIf
+
+		'Seting the form values and fields to the user's PDF copy
+		F.Intrinsic.String.Build("{0}\1094c_Temp{1}.pdf",V.Caller.LocalGSSTempDir,V.Local.iRec,V.Local.sTempDir)
+		F.Intrinsic.File.Exists(V.Local.sTempDir,V.Local.bRet)
+		F.Intrinsic.Control.If(V.Local.bRet,=,True)
+			F.Intrinsic.File.DeleteFile(V.Local.sTempDir)
+		F.Intrinsic.Control.EndIf
+
+		'Using the Global rec variable as a counter, and naming the temporary PDF files with these unique Global rec numbers so we can go back and merge them all together.
+		F.Intrinsic.Math.Add(V.Local.iRec,1,V.Local.iRec)
+		'Copies Busint file to user's FQP
+		
+		F.Intrinsic.Control.If(V.Local.iC,=,-1)
+			'If no records exist, set these blanks in field value param
+			V.Local.sFieldVals.Set("0*!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!*0*!*0*!*0*!*0*!**!**!**!**!**!**!**!*False*!**!**!**!*0*!**!*False*!**!**!**!*0*!**!**!**!**!**!*0*!**!*False*!**!**!**!*0*!**!*False*!**!**!**!*0*!**!*False*!**!**!**!*0*!**!*False*!**!**!**!*0*!**!*False*!**!**!**!*0*!**!*False*!**!**!**!*0*!**!*False*!**!**!**!*0*!**!*False*!**!**!**!*0*!**!*False*!**!**!**!*0*!**!*False*!**!**!**!*0*!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!*")
+		F.Intrinsic.Control.Endif
+		
+		f.Intrinsic.String.Split(v.Local.sFieldVals,"*!*",v.Local.sFieldVals) 
+		'needs to be at 148
+		
+		v.Local.sFieldVals.RedimPreserve(0,165) 
+		f.Intrinsic.String.Join(v.Local.sFieldvals,"*!*",v.Local.sFieldVals)
+		
+		'setting fields and values to pdf.
+		F.Automation.PDF.setformfields("F1094C",V.Local.sTempDir,V.Local.sFields,V.Local.sFieldVals,True)
+		F.Automation.PDF.Close("F1094C")
+
+	F.Intrinsic.Control.Next(V.Local.iC)
+
+	'Open Merged PDF, use a reference name and fully qualified path
+	F.Automation.PDF.Open("F1094C",V.Local.sPDFDir)
+	'Perfom PDF Merge
+	F.Intrinsic.String.Build("{0}\1094C_MergeFile.pdf",V.Caller.LocalGSSTempDir,V.Local.s1094MergDir)
+	
+	F.Automation.PDF.Merge(V.Global.s1094TempFiles,V.Local.s1094MergDir)
+	F.Automation.PDF.Close("F1094C")
+
+	'Merging Both 1094-B and 1095-B forms
+	F.Automation.PDF.Open("F1094C/F1095C",V.Local.sPDFDir)
+	F.Intrinsic.Control.If(V.Global.s1095MergDir,<>,"")
+		F.Intrinsic.String.Build("{0}*!*{1}",V.Local.s1094MergDir,V.Global.s1095MergDir,V.Local.sFinalFQP)
+	F.Intrinsic.Control.Else
+		V.Local.sFinalFQP.Set(V.Local.s1094MergDir)
+	F.Intrinsic.Control.Endif
+	Function.Intrinsic.Control.CallSub(isFileLocked)
+	
+	
+	F.Automation.PDF.Merge(V.local.sFinalFQP,V.Global.sFileDirRet)
+	F.Automation.PDF.Close("F1094C/F1095C")
+	
+	'Getting handle ID to open up with a PDF viewer
+	F.Intrinsic.File.GetHandle(V.Local.iHdl)
+	'Openning PDF
+	F.Intrinsic.Task.ShellExec(V.Local.iHdl,"Open",V.Global.sFileDirRet,"","",1)
+
+	'Cleaning up, deleting all the temp PDFs
+	F.Intrinsic.String.Split(V.Global.s1095TempFiles,"*!*",V.Global.s1095TempFiles)
+	F.Intrinsic.Control.For(V.Local.iC,V.Global.s1095TempFiles.LBound,V.Global.s1095TempFiles.UBound,1)
+		F.Intrinsic.File.Exists(V.Global.s1095TempFiles(V.Local.iC),V.Local.bRet)
+		F.Intrinsic.Control.If(V.Local.bRet,=,True)
+			F.Intrinsic.File.DeleteFile(V.Global.s1095TempFiles(V.local.iC))
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.iC)
+
+	'Cleaning up, deleting all the temp PDFs
+	F.Intrinsic.String.Split(V.Global.s1094TempFiles,"*!*",V.Global.s1094TempFiles)
+	F.Intrinsic.Control.For(V.Local.iC,V.Global.s1094TempFiles.LBound,V.Global.s1094TempFiles.UBound,1)
+		F.Intrinsic.File.Exists(V.Global.s1094TempFiles(V.Local.iC),V.Local.bRet)
+		F.Intrinsic.Control.If(V.Local.bRet,=,True)
+			F.Intrinsic.File.DeleteFile(V.Global.s1094TempFiles(V.local.iC))
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.iC)
+
+	'If file exists for merge file
+	F.Intrinsic.File.Exists(V.Local.s1094MergDir,V.Local.bRet)
+	F.Intrinsic.Control.If(V.Local.bRet,=,True)
+		F.Intrinsic.File.DeleteFile(V.Local.s1094MergDir)
+	F.Intrinsic.Control.EndIf
+
+	F.Intrinsic.File.Exists(V.Global.s1095MergDir,V.Local.bRet)
+	F.Intrinsic.Control.If(V.Local.bRet,=,True)
+		F.Intrinsic.File.DeleteFile(V.Global.s1095MergDir)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Else
+	F.Intrinsic.String.Build("1094/1095C Form for {0} is not yet released.",V.Local.sYr,V.Local.sMsg)
+	F.Intrinsic.UI.Msgbox(V.Local.sMsg)
+		F.Intrinsic.Control.CallSub(Ss_form1_unload)
+F.Intrinsic.Control.EndIf
+	'Ending Program
+	F.Intrinsic.Control.CallSub(Ss_form1_unload)
+
+'F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Load_rst_1094c_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: BIR_PY_1094_1095-C.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Ss_form1_unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Load_rst_1094c.End
+
+Program.Sub.GetDefaultData.Start
+F.Intrinsic.Control.SetErrorHandler("GetDefaultData_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sSql.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.sUDTVals.Declare(String)
+V.Local.sZip.Declare(String)
+V.Local.sUDTref.Declare(String)
+V.Local.sYr.Declare(String)
+V.Local.sMember.Declare(String)
+V.Local.sEin.Declare(String)
+V.Local.sAddress.Declare(String)
+V.Local.sCity.Declare(String)
+V.Local.sState.Declare(String)
+V.Local.sZipExtended.Declare(String)
+V.Local.sCols.Declare(String)
+V.Local.sData.Declare(String)
+
+V.Local.sRet.Set("*!**!**!**!**!*")
+F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+
+'Loading the employer information out of the company table
+'Company name
+V.Local.sSql.Set("Select Text1 from op_header where id = '401359'")
+F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sMember)
+
+'EIN
+V.Local.sSql.Set("Select Text1 from op_header where id = '401362'")
+F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sEin)
+
+'Address
+V.Local.sSql.Set("Select Text1 from op_header where id = '401360' and sequence = '0000'")
+F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sAddress)
+
+'city
+V.Local.sSql.Set("Select Text1 from op_header where id = '401361' and sequence = '0001'")
+F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sCity)
+
+'state
+V.Local.sSql.Set("Select Text1 from op_header where id = '401361' and sequence = '0002'")
+F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sState)
+
+'zip
+V.Local.sSql.Set("Select Text1 from op_header where id = '401361' and sequence = '0003'")
+F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sZip)
+
+'zip extended
+V.Local.sSql.Set("Select Text1 from op_header where id = '401361' and sequence = '0004'")
+F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sZipExtended)
+
+F.Intrinsic.Control.If(V.Local.sZipExtended,<>,"")
+	F.Intrinsic.String.Build("{0}-{1}",V.Local.sZip,V.Local.sZipExtended,V.Local.sZip)	
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.String.Format(V.Screen.SS_Form1!dtp1_year.Value,"yyyy",V.Local.sYr)
+
+V.Local.sCols.Set("Rec_ID*!*Filing_Year*!*Member_Name*!*Ein*!*Address*!*City*!*State*!*Country_Zip*!*Contact_Name*!*Telephone*!*DGE_Name_Name*!*DGE_Ein*!*Dge_Address*!*Dge_City*!*Dge_State*!*Dge_Country_Zip*!*Dge_Contact_Name*!*Dge_Telephone*!*Auth_Transmitter*!*Group_Member*!*Qual_Offer*!*Qual_Offer_Trans*!*Sec_4980H_Trans*!*Offer_Method")
+F.Intrinsic.String.Build("0*!*{0}*!*{1}*!*{2}*!*{3}*!*{4}*!*{5}*!*{6}*!**!**!**!**!**!**!**!**!**!**!**!**!**!**!**!*",V.Local.sYr,V.Local.sMember,V.Local.sEin,V.Local.sAddress,V.Local.sCity,V.Local.sState,V.Local.sZip,V.Local.sData)
+
+F.Data.DataTable.CreateFromString("dt1094C",V.Local.sData,V.Local.sCols,"Long*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String","*!*","",True)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("GetDefaultData_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: BIR_PY_1094_1095-C.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Ss_form1_unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.GetDefaultData.End
+
+Program.Sub.Update_Default.Start
+F.Intrinsic.Control.SetErrorHandler("Update_Default_Err")
+F.Intrinsic.Control.ClearErrors
+V.Local.sError.Declare(String)
+v.Local.iC.Declare(Long)
+V.Local.sSql.Declare(String)
+V.Local.sCName.Declare(String)
+V.Local.sEin.Declare(String)
+V.Local.sAddress.Declare(String)
+V.Local.sCity.Declare(String)
+V.Local.sState.Declare(String)
+V.Local.sZip.Declare(String)
+V.Local.sZipExtended.Declare(String)
+'ic should only b 1. 0
+F.Intrinsic.Control.For(v.Local.iC,0,v.DataTable.dt1094C.RowCount--,1)
+	'Loading the employer information out of the company table
+	'Company name
+	V.Local.sSql.Set("Select Text1 from op_header where id = '401359'")
+	F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sCName)
+	
+	'F.ODBC.Connection!conx.OpenRecordsetRO("rst",V.Local.sSql)
+	'Function.Intrinsic.Control.If(v.ODBC.conx!rst.EOF,<>,True)
+	F.Intrinsic.Control.If(V.Local.sCName,<>,"")
+		F.Data.DataTable.SetValue("dt1094C",V.Local.iC,"Member_Name",V.Local.sCName)
+		'v.uGlobal.u1094C(v.Local.iC)!Member_Name.Set(v.ODBC.conx!rst!FieldValTrim!Text1)
+	Function.Intrinsic.Control.EndIf
+	'F.ODBC.conx!rst.Close
+	
+	'EIN
+	V.Local.sSql.Set("Select Text1 from op_header where id = '401362'")
+	F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sEin)
+	
+	'F.ODBC.Connection!conx.OpenRecordsetRO("rst",V.Local.sSql)
+	'Function.Intrinsic.Control.If(v.ODBC.conx!rst.EOF,<>,True)
+	F.Intrinsic.Control.If(V.Local.sEin,<>,"")
+		F.Data.DataTable.SetValue("dt1094C",V.Local.iC,"Ein",V.Local.sEin)
+		'v.uGlobal.u1094C(v.Local.iC)!Member_Name.Set(v.ODBC.conx!rst!FieldValTrim!Text1)
+	Function.Intrinsic.Control.EndIf
+	'F.ODBC.conx!rst.Close
+
+	'Address
+	V.Local.sSql.Set("Select Text1 from op_header where id = '401360' and sequence = '0000'")
+	F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sAddress)
+	
+	'F.ODBC.Connection!conx.OpenRecordsetRO("rst",V.Local.sSql)
+	'Function.Intrinsic.Control.If(v.ODBC.conx!rst.EOF,<>,True)
+	F.Intrinsic.Control.If(V.Local.sAddress,<>,"")
+		F.Data.DataTable.SetValue("dt1094C",V.Local.iC,"Address",V.Local.sAddress)
+		'v.uGlobal.u1094C(v.Local.iC)!Member_Name.Set(v.ODBC.conx!rst!FieldValTrim!Text1)
+	Function.Intrinsic.Control.EndIf
+	'F.ODBC.conx!rst.Close
+
+	'city
+	V.Local.sSql.Set("Select Text1 from op_header where id = '401361' and sequence = '0001'")
+	F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sCity)
+	
+	'F.ODBC.Connection!conx.OpenRecordsetRO("rst",V.Local.sSql)
+	'Function.Intrinsic.Control.If(v.ODBC.conx!rst.EOF,<>,True)
+	F.Intrinsic.Control.If(V.Local.sCity,<>,"")
+		F.Data.DataTable.SetValue("dt1094C",V.Local.iC,"City",V.Local.sCity)
+		'v.uGlobal.u1094C(v.Local.iC)!Member_Name.Set(v.ODBC.conx!rst!FieldValTrim!Text1)
+	Function.Intrinsic.Control.EndIf
+	'F.ODBC.conx!rst.Close
+
+	'state
+	V.Local.sSql.Set("Select Text1 from op_header where id = '401361' and sequence = '0002'")
+	F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sState)
+	
+	'F.ODBC.Connection!conx.OpenRecordsetRO("rst",V.Local.sSql)
+	'Function.Intrinsic.Control.If(v.ODBC.conx!rst.EOF,<>,True)
+	F.Intrinsic.Control.If(V.Local.sState,<>,"")
+		F.Data.DataTable.SetValue("dt1094C",V.Local.iC,"State",V.Local.sState)
+		'v.uGlobal.u1094C(v.Local.iC)!Member_Name.Set(v.ODBC.conx!rst!FieldValTrim!Text1)
+	Function.Intrinsic.Control.EndIf
+	'F.ODBC.conx!rst.Close
+
+	'zip
+	V.Local.sSql.Set("Select Text1 from op_header where id = '401361' and sequence = '0003'")
+	F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sZip)
+	
+	'zip extended
+	V.Local.sSql.Set("Select Text1 from op_header where id = '401361' and sequence = '0004'")
+	F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql,V.Local.sZipExtended)
+	
+	F.Intrinsic.Control.If(V.Local.sZipExtended,<>,"","AND",V.Local.sZip,<>,"")
+		F.Intrinsic.String.Build("{0}-{1}",V.Local.sZip.Trim,V.Local.sZipExtended.Trim,V.Local.sZip)	
+		F.Data.DataTable.SetValue("dt1094C",V.Local.iC,"Country_ZIP",V.Local.sZip)
+	F.Intrinsic.Control.EndIf
+	
+F.Intrinsic.Control.Next(v.Local.iC)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Update_Default_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: BIR_PY_1094_1095-C.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	Function.Intrinsic.Control.CallSub(ss_form1_unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Update_Default.End
+
+Program.Sub.IsFileLocked.Start
+F.Intrinsic.Control.SetErrorHandler("IsFileLocked_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+v.Local.bLocked.Declare(Boolean)
+v.Local.bLocked.Set(True)
+v.Local.sREt.Declare(STring)
+f.Intrinsic.Control.DoUntil(v.Local.bLocked,=,False)
+	F.Intrinsic.File.IsFileLocked(v.Global.sFileDirRet,v.Local.bLocked) 
+	Function.Intrinsic.Control.If(v.Local.bLocked,=,True) 
+		F.Intrinsic.String.Build("File {0} is open. Please close the file and try again.",v.Global.sFileDirRet,v.Local.sError)
+		f.Intrinsic.UI.Msgbox(v.Local.sError)		
+	Function.Intrinsic.Control.EndIf
+f.Intrinsic.Control.Loop
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("IsFileLocked_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: BIR_PY_1094_1095-C.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	Function.Intrinsic.Control.CallSub(ss_form1_unload)
+Function.Intrinsic.Control.EndIf
+Program.Sub.IsFileLocked.End
+
+Program.Sub.1094_PART1.Start
+F.Intrinsic.Control.SetErrorHandler("1094pART1_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("1094pART1_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: BIR_PY_1094-1095-c.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+Program.Sub.1094_PART1.End
+
+Program.Sub.Comments.Start
+${$0$}$$}$$}$12:00:00 AM$}$False
+${$3$}$0$}$$}$-1$}$-1$}$$}$01/01/1900$}$'Project Start Date 9/28/2015
+'Coded by RKing
+Program.Sub.Comments.End
+
+Program.Sub.ScreenSS.Start
+SS_Form1{{CAPTION::1094/1095-C
+SS_Form1.CTRL{{NAME::dtp1_year\\TYPE::6\\CAPTION::Filing Year\\TABSTOP::1\\GROUP::-1\\BROWSER::0\\INTL::242801\\SIZE::1
+SS_Form1.CTRL{{NAME::cmd1Print\\TYPE::5\\CAPTION::Print\\TABSTOP::2\\GROUP::-1\\BROWSER::0\\INTL::452800\\SIZE::1
+
+Program.Sub.ScreenSS.End
+
